@@ -7,14 +7,25 @@
 
 ---
 
-## [2026-05-22]
+## [2026-05-22 13:12]
+
+### 新增
+- `CHANGELOG.md`：工作日誌，依 Keep a Changelog 格式記錄所有變更
+
+### 變更
+- `README.md`：專案結構補充 CHANGELOG.md 說明；協作注意事項新增更新日誌提醒
+- `CLAUDE.md`：MANDATORY REQUIREMENTS 新增「每次 commit 後必須更新 CHANGELOG」規則；專案結構補充 CHANGELOG.md
+
+---
+
+## [2026-05-22 13:06]
 
 ### 新增
 - `README.md`：專案門面說明，包含快速開始、實驗目錄、命名慣例與協作注意事項
 
 ---
 
-## [2026-05-19]
+## [2026-05-19 15:14]
 
 ### 新增
 - `01RL_Lab.py`：CartPole-v1 隨機動作入門，示範 MDP 基本迴圈（observation / action / reward / terminated）
@@ -27,7 +38,7 @@
 
 <!-- 新增記錄時複製以下模板到最上方 -->
 <!--
-## [YYYY-MM-DD]
+## [YYYY-MM-DD HH:MM]
 
 ### 新增
 - 新功能、新腳本、新實驗
