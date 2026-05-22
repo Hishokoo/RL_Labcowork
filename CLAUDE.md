@@ -26,6 +26,7 @@ Before starting ANY task, respond with:
 ### MANDATORY REQUIREMENTS
 - **COMMIT** after every completed experiment or code change
 - **GITHUB BACKUP** — push after every commit: `git push origin main`
+- **UPDATE CHANGELOG** — update `CHANGELOG.md` after every commit (Added / Changed / Fixed / Removed)
 - **USE TASK AGENTS** for training runs (>30 seconds)
 - **TODOWRITE** for multi-step tasks (3+ steps)
 - **READ FILES FIRST** before editing any script
@@ -38,6 +39,7 @@ Before starting ANY task, respond with:
 ```
 RL_Lab/
 ├── CLAUDE.md
+├── CHANGELOG.md               # 工作日誌（每次 commit 後更新）
 ├── .vscode/
 │   └── settings.json
 ├── tools/                     # 共用工具腳本

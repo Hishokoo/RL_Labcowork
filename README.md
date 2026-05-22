@@ -40,6 +40,7 @@ python 01RL_Lab.py
 ```
 RL_Lab/
 ├── CLAUDE.md          # AI agent 協作指引（Claude Code 專用）
+├── CHANGELOG.md       # 工作日誌，記錄每次實驗與變更
 ├── tools/             # 共用工具腳本（各實驗可複用的函式）
 ├── output/            # 所有輸出統一放這（模型權重、訓練圖表）
 │
@@ -91,3 +92,4 @@ RL_Lab/
 - 不要建立 `_v2`、`enhanced_`、`new_` 等命名的重複腳本，直接擴充原腳本
 - 有共用邏輯請放進 `tools/`
 - AI agent 協作請參閱 `CLAUDE.md`
+- 每次 commit 後請同步更新 `CHANGELOG.md`，記錄變更內容
