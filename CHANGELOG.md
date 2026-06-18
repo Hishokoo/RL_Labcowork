@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-18 00:00]
+
+### 新增
+- `02train_td3.py`：TD3 主訓練腳本（MuJoCo Ant-v4），含 random warmup、訓練迴圈、eval、TensorBoard logging、checkpoint 存至 `output/td3_ant/`
+- `tools/__init__.py`：將 tools/ 設為 Python package
+- `tools/replay_buffer.py`：ReplayBuffer，支援 add() 與 sample()（回傳 GPU tensor）
+- `tools/networks.py`：Actor（tanh 輸出 × max_action）與 Twin Critic（雙 Q-network）
+- `tools/td3_agent.py`：TD3Agent，實作 Twin Critics、Delayed Policy Update、Target Policy Smoothing、soft target update、save/load
+
+---
+
 ## [2026-05-22 13:12]
 
 ### 新增
