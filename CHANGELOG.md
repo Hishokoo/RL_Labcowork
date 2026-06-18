@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-18 01:00]
+
+### 新增
+- `02test_td3.py`：載入訓練好的 TD3 checkpoint 並開啟 MuJoCo 視覺化動畫，支援 `--checkpoint` 與 `--episodes` 參數
+- 完成 1M steps 訓練，最終 eval reward 達 **4090~5183**（目標範圍 3000~6000 ✅）
+
+### 變更
+- `02train_td3.py`：環境升級 `Ant-v4` → `Ant-v5`（obs 27 → 105 維）；output 路徑改為 `output/td3_ant_v5/`
+
+---
+
 ## [2026-06-18 00:00]
 
 ### 新增

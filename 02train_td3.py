@@ -9,7 +9,7 @@ from tools.replay_buffer import ReplayBuffer
 from tools.td3_agent import TD3Agent
 
 # ── Hyperparameters ───────────────────────────────────────────────────────────
-ENV_NAME          = "Ant-v4"
+ENV_NAME          = "Ant-v5"
 SEED              = 42
 MAX_TIMESTEPS     = 1_000_000
 START_TIMESTEPS   = 25_000      # 隨機動作暖機步數
@@ -17,7 +17,7 @@ EVAL_FREQ         = 5_000       # 每隔幾步跑一次 evaluation
 SAVE_FREQ         = 100_000     # 每隔幾步存一次 checkpoint
 BATCH_SIZE        = 256
 EXPLORATION_NOISE = 0.1         # rollout 時加入的 Gaussian noise 標準差（相對 max_action）
-OUTPUT_DIR        = "output/td3_ant"
+OUTPUT_DIR        = "output/td3_ant_v5"
 # ─────────────────────────────────────────────────────────────────────────────
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
