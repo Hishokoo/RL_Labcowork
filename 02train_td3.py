@@ -18,6 +18,12 @@ SAVE_FREQ         = 100_000     # 每隔幾步存一次 checkpoint
 BATCH_SIZE        = 256
 EXPLORATION_NOISE = 0.1         # rollout 時加入的 Gaussian noise 標準差（相對 max_action）
 OUTPUT_DIR        = "output/td3_ant_v5"
+
+# Reward shaping（邊界懲罰 + 動作正則化，詳見 markdown/ant_reward_modifications.md）
+MAX_RADIUS            = 8.0     # 離原點距離超過此值開始懲罰，並截斷 episode
+BOUNDARY_PENALTY      = 1.0     # 邊界懲罰係數
+ACTION_PENALTY_WEIGHT = 0.5     # 動作幅度懲罰係數（避免暴力蹬地）
+ACTION_DIFF_PENALTY_WEIGHT = 0.1  # 相鄰動作差異懲罰係數（避免抖動）
 # ─────────────────────────────────────────────────────────────────────────────
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -61,6 +67,7 @@ obs, _           = env.reset()
 episode_reward   = 0.0
 episode_steps    = 0
 episode_num      = 0
+prev_action      = np.zeros(act_dim)
 
 for t in range(1, MAX_TIMESTEPS + 1):
     episode_steps += 1
@@ -72,7 +79,19 @@ for t in range(1, MAX_TIMESTEPS + 1):
         noise  = np.random.normal(0, max_action * EXPLORATION_NOISE, size=act_dim)
         action = (agent.select_action(obs) + noise).clip(-max_action, max_action)
 
-    next_obs, reward, terminated, truncated, _ = env.step(action)
+    next_obs, reward, terminated, truncated, info = env.step(action)
+
+    # 邊界位置懲罰：超出 MAX_RADIUS 後線性懲罰並截斷（不用 terminated，避免影響 Q 值 bootstrap）
+    dist = info["distance_from_origin"]
+    if dist > MAX_RADIUS:
+        reward -= BOUNDARY_PENALTY * (dist - MAX_RADIUS)
+        truncated = True
+
+    # 動作正則化：幅度懲罰 + 相鄰動作差異懲罰（contact_cost 已內建於 Ant-v5 reward，不重複懲罰）
+    reward -= ACTION_PENALTY_WEIGHT * np.sum(np.square(action))
+    reward -= ACTION_DIFF_PENALTY_WEIGHT * np.sum(np.square(action - prev_action))
+    prev_action = action.copy()
+
     done = terminated or truncated
 
     # Store transition（done 用 terminated，不含 timeout truncation）
@@ -95,6 +114,7 @@ for t in range(1, MAX_TIMESTEPS + 1):
         episode_reward = 0.0
         episode_steps  = 0
         episode_num   += 1
+        prev_action    = np.zeros(act_dim)
 
     # Evaluation
     if t % EVAL_FREQ == 0:

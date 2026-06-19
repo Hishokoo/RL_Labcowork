@@ -7,6 +7,19 @@
 
 ---
 
+## [2026-06-19 15:52]
+
+### 新增
+- `markdown/ant_reward_modifications.md`：Ant reward shaping 修改規格文件（邊界懲罰、動作正則化）
+
+### 變更
+- `02train_td3.py`：依規格文件加入 reward shaping，並調整為 Ant-v5 寫法
+  - 邊界位置懲罰：用 `info["distance_from_origin"]` 取代 v4 寫法的 `next_obs[0:2]`（v5 預設不把 x,y 放進 observation），超過 `MAX_RADIUS=8.0` 線性懲罰並設 `truncated=True`
+  - 動作正則化：新增動作幅度懲罰（`ACTION_PENALTY_WEIGHT=0.5`）與相鄰動作差異懲罰（`ACTION_DIFF_PENALTY_WEIGHT=0.1`），新增 `prev_action` 追蹤
+  - 略過額外 contact 懲罰：Ant-v5 預設已將 `contact_cost` 內建於 reward，不重複懲罰
+
+---
+
 ## [2026-06-18 01:00]
 
 ### 新增
