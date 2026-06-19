@@ -7,6 +7,17 @@
 
 ---
 
+## [2026-06-19 17:20]
+
+### 變更
+- 整理 `output/` 目錄結構，統一依腳本編號命名：`output/01train_td3/`（對應 `01train_td3.py` baseline）、`output/02train_td3/`（對應 `02train_td3.py` reward shaping）
+- `01train_td3.py`、`02train_td3.py`：`OUTPUT_DIR` 同步改為對應的新路徑
+
+### 移除
+- `output/td3_ant/`：早期 Ant-v4 孤兒訓練資料，與現行 01/02 腳本不對應，已刪除
+
+---
+
 ## [2026-06-19 16:10]
 
 ### 新增

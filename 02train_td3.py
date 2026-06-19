@@ -17,7 +17,7 @@ EVAL_FREQ         = 5_000       # 每隔幾步跑一次 evaluation
 SAVE_FREQ         = 100_000     # 每隔幾步存一次 checkpoint
 BATCH_SIZE        = 256
 EXPLORATION_NOISE = 0.1         # rollout 時加入的 Gaussian noise 標準差（相對 max_action）
-OUTPUT_DIR        = "output/td3_ant_v5"
+OUTPUT_DIR        = "output/02train_td3"
 
 # Reward shaping（邊界懲罰 + 動作正則化，詳見 markdown/ant_reward_modifications.md）
 MAX_RADIUS            = 8.0     # 離原點距離超過此值開始懲罰，並截斷 episode

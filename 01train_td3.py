@@ -17,7 +17,7 @@ EVAL_FREQ         = 5_000       # 每隔幾步跑一次 evaluation
 SAVE_FREQ         = 100_000     # 每隔幾步存一次 checkpoint
 BATCH_SIZE        = 256
 EXPLORATION_NOISE = 0.1         # rollout 時加入的 Gaussian noise 標準差（相對 max_action）
-OUTPUT_DIR        = "output/td3_ant_v5"
+OUTPUT_DIR        = "output/01train_td3"
 # ─────────────────────────────────────────────────────────────────────────────
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
