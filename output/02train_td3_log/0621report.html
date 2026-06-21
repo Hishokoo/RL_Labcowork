@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>02train_td3 工作日誌 — 2026-06-21</title>
+<style>
+  body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; max-width: 980px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #222; }
+  h1 { border-bottom: 3px solid #333; padding-bottom: 8px; }
+  h2 { margin-top: 48px; border-left: 6px solid #4a7; padding-left: 12px; }
+  h3 { margin-top: 28px; color: #333; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+  th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+  th { background: #f0f0f0; }
+  code, pre { background: #f5f5f5; border-radius: 4px; }
+  pre { padding: 12px; overflow-x: auto; font-size: 13px; }
+  code { padding: 2px 5px; }
+  .tag-ok { color: #176f17; font-weight: bold; }
+  .tag-bad { color: #b00020; font-weight: bold; }
+  .tag-warn { color: #b06000; font-weight: bold; }
+  .box { background: #fafafa; border: 1px solid #ddd; border-radius: 6px; padding: 14px 18px; margin: 16px 0; }
+  .conclusion { background: #eef7ee; border-left: 4px solid #4a7; }
+  .problem { background: #fdeeee; border-left: 4px solid #c33; }
+  .timeline-item { border-left: 3px solid #aaa; margin-left: 8px; padding-left: 18px; margin-bottom: 28px; position: relative; }
+  .timeline-item::before { content: ""; position: absolute; left: -8px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #888; }
+  .timeline-item.ok::before { background: #4a7; }
+  .timeline-item.bad::before { background: #c33; }
+  .timeline-item.warn::before { background: #d90; }
+  .small { color: #666; font-size: 13px; }
+  nav { background: #f7f7f7; border: 1px solid #ddd; padding: 14px 20px; border-radius: 6px; }
+  nav a { display: inline-block; margin-right: 14px; }
+</style>
+</head>
+<body>
+
+<h1>02train_td3.py 工作日誌</h1>
+<p class="small">日期：2026-06-21　目的：解決 Ant-v5 TD3 訓練「衝出邊界」與「走路太快 / 步態不自然」的問題</p>
+
+<nav>
+<strong>目錄：</strong>
+<a href="#background">背景</a>
+<a href="#fixed">確定的程式碼修正</a>
+<a href="#attempts">嘗試過的方向（按時間序）</a>
+<a href="#status">目前狀態</a>
+<a href="#next">下一步</a>
+</nav>
+
+<h2 id="background">背景</h2>
+<div class="box problem">
+<p>使用者打開 <code>02test_td3.py</code> 模擬器，發現用 <code>output/02train_td3</code> 訓練出來的模型：</p>
+<ol>
+  <li>會跑出邊界（地圖外）</li>
+  <li>走路速度太快，懷疑這導致牠用蠻力衝刺而不是用重心轉移、抬腳的自然步態行走</li>
+</ol>
+<p>原始程式碼已有邊界懲罰跟動作正則化，但效果不夠。本日誌記錄修正過程中所有嘗試、驗證數據與結論。</p>
+</div>
+
+<h2 id="fixed">確定的程式碼修正（已套用到 02train_td3.py）</h2>
+<table>
+<tr><th>修正項目</th><th>說明</th></tr>
+<tr>
+  <td><strong>Bootstrap bug</strong></td>
+  <td>原本出界只設 <code>truncated=True</code>，存進 replay buffer 的 terminal flag 沒有把邊界截斷算進去，導致 critic 在 bootstrap 時仍認為出界後有未來價值，懲罰訊號被沖淡。改為：
+  <pre>replay_buffer.add(obs, action, next_obs, reward,
+                  float(terminated or boundary_violation))</pre></td>
+</tr>
+<tr>
+  <td><strong>漸進式邊界懲罰</strong></td>
+  <td>新增 <code>SOFT_RADIUS=6.0</code> 在接近邊界時就給漸增懲罰，<code>MAX_RADIUS=8.0</code> 才強制截斷（原本只有事後線性懲罰，沒有提早的負梯度）；<code>BOUNDARY_PENALTY</code> 從 1.0 加大到 5.0
+  <pre>dist = info["distance_from_origin"]
+if dist > SOFT_RADIUS:
+    reward -= BOUNDARY_PENALTY * (dist - SOFT_RADIUS)
+boundary_violation = dist > MAX_RADIUS
+if boundary_violation:
+    truncated = True</pre></td>
+</tr>
+</table>
+<p class="tag-ok">這兩項修正在後續所有實驗中都穩健運作——agent 從未在任何一次實驗中真正衝出邊界。</p>
+
+<h2 id="attempts">嘗試過的方向（按時間序）</h2>
+
+<div class="timeline-item bad">
+<h3>嘗試 1：速度區間懲罰 + forward_reward_weight=0.6（正式跑滿 1,000,000 steps）</h3>
+<p>加入 <code>MIN_SPEED=0.5</code> / <code>TARGET_SPEED=1.5</code> 速度區間懲罰、<code>STILLNESS_PENALTY_WEIGHT=0.5</code>、<code>ACTION_PENALTY_WEIGHT=0.15</code>（避免跟 Ant-v5 內建 ctrl_cost 重複扣分）。</p>
+<p>訓練前先用舊模型動作分布模擬 reward 地形，驗證走路（vx≈1.13）reward 比站立高（1.505 vs 0.867），地形設計本身正確。</p>
+<p>正式訓練（約 55 分鐘）：episode 穩定跑滿 1000 步，最終 eval reward = <strong>907.7</strong>，看起來很成功。</p>
+<p class="tag-bad">但實際用腳本量化驗證 5 個 episode：avg_vx 僅 0.00~0.02，max_dist 全部 &lt; 1m —— agent 幾乎完全沒有移動，收斂到「站著不動」局部解。事前的靜態模擬只驗證了 reward 地形設計方向，並未模擬「TD3 從零訓練是否真的能找到地形上的最優點」，這是探索/收斂問題，無法只靠靜態模擬預測。</p>
+</div>
+
+<div class="timeline-item bad">
+<h3>嘗試 2：加重 STILLNESS_PENALTY_WEIGHT（0.5 → 1.5 → 3.0）</h3>
+<table>
+<tr><th>設定</th><th>驗證長度</th><th>結果</th></tr>
+<tr><td>weight=3.0，從零訓練</td><td>100k steps</td><td class="tag-bad">episode 縮短到 7~65 步，reward 持續負值，agent 頻繁摔倒</td></tr>
+<tr><td>weight=1.5，從零訓練</td><td>延長到 300k steps</td><td class="tag-bad">T=50k 短暫穩定（reward 轉正但 vx 仍低），T=100k 起又不穩定，T=150k~300k 完全卡死在 7~9 步，15 萬步沒有任何改善</td></tr>
+</table>
+<p>逼牠不能站著不動，但牠還沒學會邊走邊平衡，反而陷入「衝一下就摔倒重來」的爛局部解，且長時間訓練也未見收斂。</p>
+</div>
+
+<div class="timeline-item bad">
+<h3>嘗試 3：用舊的「會走但太快」模型微調（fine-tune）</h3>
+<p>用 <code>output/01train_td3</code> 已訓練模型（知道怎麼協調腳走，但不知道要減速/守邊界）作初始化，weight=1.5，100k steps 驗證。</p>
+<p class="tag-bad">結果比從零訓練更不穩定，從頭到尾 episode 都只有 7~9 步。新 reward 分佈跟舊模型訓練時差太多，等於要它一邊忘記舊習慣一邊學新規則，反而更不穩。</p>
+</div>
+
+<div class="timeline-item warn">
+<h3>嘗試 4：簡化版 —— 移除速度懲罰，只留邊界 + forward_reward_weight</h3>
+<table>
+<tr><th>設定</th><th>150k steps 結果</th></tr>
+<tr><td>weight=0.6（移除所有 stillness/speed 懲罰，ACTION_PENALTY_WEIGHT 還原 0.5）</td><td>穩定跑滿 1000 步，reward 830~870，max_dist 2.5~5m（安全），但 <span class="tag-bad">avg_vx 僅 0.03~0.09</span></td></tr>
+<tr><td>weight=0.8</td><td>穩定，但 <span class="tag-bad">avg_vx 隨訓練「持續下降」</span>（T50k: 0.06~0.15 → T150k: 0.02~0.05），max_dist 同步縮小</td></tr>
+</table>
+<p class="tag-warn">關鍵發現：拿掉 stillness 懲罰結果幾乎一樣 —— 證明問題不是懲罰強弱，而是 <strong>Ant-v5 預設 healthy_reward=1.0 讓「站著不動」變成零風險的 attractor</strong>，在 0.5~0.8 範圍內不管怎麼調 forward_reward_weight 都會被吸進去。</p>
+</div>
+
+<div class="timeline-item bad">
+<h3>嘗試 5：採用 markdown/ant_v5_attractor_fix.md 方案 —— healthy_reward=0.0 + contact_cost_weight=5e-3</h3>
+<p>診斷文件（外部 Claude 對話產出）指出根因是 <code>healthy_reward</code>，解法：拿掉 healthy_reward（站著不再有收入）+ 提高 contact_cost_weight 十倍（懲罰重踩蹬地，改善跑姿）+ 還原 <code>forward_reward_weight=1.0</code>。</p>
+<table>
+<tr><th>階段</th><th>avg_vx</th><th>episode 長度</th></tr>
+<tr><td>T=0~50k</td><td>已有起色（0.1~1.4 區間）</td><td>變化大，多在 10~230 步</td></tr>
+<tr><td>T=100k</td><td>0.1~0.8（達標：md 檔要求 &gt;0.1）</td><td class="tag-bad">卡在 8~12 步</td></tr>
+<tr><td>T=150k~200k</td><td>0.1~0.8，沒有再進步</td><td class="tag-bad">持續卡在 7~12 步，無改善</td></tr>
+</table>
+<p class="tag-warn">移動誘因確實恢復了（avg_vx 不再趨近 0），但觸發了 md 檔自己預告的「風險1：移除 healthy_reward 後 agent 學成快速摔倒結束 episode」——episode 長度在 10 萬步內完全沒有改善。</p>
+</div>
+
+<div class="timeline-item bad">
+<h3>嘗試 6：依 md 檔備案調整 healthy_reward=0.0 → 0.1</h3>
+<p>md 檔建議：若觀察到 episode 長度持續 &lt; 50，加回一點點 healthy_reward 當安全網。</p>
+<table>
+<tr><th>設定</th><th>T=100k~200k episode 長度</th><th>avg_vx</th></tr>
+<tr><td>healthy_reward=0.0</td><td>卡在 8~12 步</td><td>0.1~0.8</td></tr>
+<tr><td>healthy_reward=0.1</td><td class="tag-bad">卡在 7~10 步（幾乎相同）</td><td>0.3~0.8</td></tr>
+</table>
+<p class="tag-bad">備案未生效，跟 0.0 版本是同一種失敗模式：agent 確實會動，但完全學不會「邊走邊平衡」，摔倒懲罰太重導致牠每次都在學會走路之前就先放棄。</p>
+</div>
+
+<h2 id="status">目前狀態</h2>
+<div class="box conclusion">
+<table>
+<tr><th>項目</th><th>狀態</th></tr>
+<tr><td><code>02train_td3.py</code> 程式碼</td><td><code>healthy_reward=0.1</code> 版本（嘗試 6 的設定），<strong>尚未跑完整 1M steps</strong>，僅做過 200k steps 短驗證</td></tr>
+<tr><td><code>output/02train_td3/</code> 的 checkpoint</td><td>仍是「嘗試 1」（<code>forward_reward_weight=0.6</code> + 弱 stillness）跑滿 1M steps 的舊結果 —— 已知問題：不出界但幾乎不走</td></tr>
+<tr><td>唯一全程穩健的部分</td><td class="tag-ok">邊界懲罰機制（漸進懲罰 + 強制截斷 + bootstrap bug 修正），在所有 8 次實驗中從未真正出界</td></tr>
+<tr><td>未解決的部分</td><td class="tag-bad">「會走路」與「跑姿自然/不衝太快」這兩個目標，目前測過的 8 種設定都沒有同時達成</td></tr>
+</table>
+</div>
+
+<h2 id="next">下一步選項</h2>
+<div class="box">
+<table>
+<tr><th>選項</th><th>說明</th><th>風險</th></tr>
+<tr>
+  <td><strong>A. 採用 md 檔「保底方案」（建議，已提出待確認）</strong></td>
+  <td>還原 <code>healthy_reward=1.0</code>、<code>forward_reward_weight=1.0</code>、<code>contact_cost_weight</code> 預設值，只保留已驗證穩定的邊界機制。跑姿/速度問題列為 future work。</td>
+  <td>會走得跟最初一樣快，「走太快」問題不會解決，但保證不出界</td>
+</tr>
+<tr>
+  <td>B. 再試 healthy_reward 其他數值（如 0.3、0.5）</td>
+  <td>0.0 跟 0.1 都失敗，也許需要更高的安全網才能讓 agent 撐過學習平衡的過渡期</td>
+  <td>已經 2 次嘗試失敗，第 3 次仍可能落入同樣的「卡在 ~10 步」失敗模式</td>
+</tr>
+<tr>
+  <td>C. Curriculum：訓練前期高權重學走路，後期再降低</td>
+  <td>之前在 report.html 提過，尚未實作驗證</td>
+  <td>需要額外開發時間，但理論上最有機會同時解決兩個目標</td>
+</tr>
+</table>
+</div>
+
+</body>
+</html>

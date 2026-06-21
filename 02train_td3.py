@@ -19,9 +19,17 @@ BATCH_SIZE        = 256
 EXPLORATION_NOISE = 0.1         # rollout 時加入的 Gaussian noise 標準差（相對 max_action）
 OUTPUT_DIR        = "output/02train_td3"
 
-# Reward shaping（邊界懲罰 + 動作正則化，詳見 markdown/ant_reward_modifications.md）
-MAX_RADIUS            = 8.0     # 離原點距離超過此值開始懲罰，並截斷 episode
-BOUNDARY_PENALTY      = 1.0     # 邊界懲罰係數
+# Reward shaping（詳見 markdown/ant_v5_attractor_fix.md）
+# 根本問題：Ant-v5 預設 healthy_reward=1.0 讓「站著不動」變成零風險的 attractor，
+# 不管怎麼調 forward_reward_weight / stillness penalty 都會被吸進去（5 次實驗驗證）。
+# 解法：拿掉 healthy_reward（站著不再有收入）+ 提高 contact_cost_weight（直接懲罰重踩，改善跑姿）+
+# 還原 forward_reward_weight=1.0（不再用降低速度誘因的方式抑制衝刺）。
+FORWARD_REWARD_WEIGHT = 1.0     # 還原 Ant-v5 預設值，不再壓速度誘因
+HEALTHY_REWARD        = 0.1     # 留一點安全網（0.0 時 agent 學成「衝一下就摔倒重來」，episode 卡在 8~12 步，見 markdown/ant_v5_attractor_fix.md 風險1）
+CONTACT_COST_WEIGHT   = 5e-3    # 預設 5e-4 太小幾乎沒作用，提高 10 倍直接懲罰重踩蹬地
+SOFT_RADIUS           = 6.0     # 超過此距離開始給漸增邊界懲罰（事前梯度，避免到了才知道）
+MAX_RADIUS            = 8.0     # 離原點距離超過此值強制截斷 episode
+BOUNDARY_PENALTY      = 5.0     # 邊界懲罰係數（相對 SOFT_RADIUS 漸增）
 ACTION_PENALTY_WEIGHT = 0.5     # 動作幅度懲罰係數（避免暴力蹬地）
 ACTION_DIFF_PENALTY_WEIGHT = 0.1  # 相鄰動作差異懲罰係數（避免抖動）
 # ─────────────────────────────────────────────────────────────────────────────
@@ -31,8 +39,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {device}")
 
 # ── Environment ───────────────────────────────────────────────────────────────
-env      = gym.make(ENV_NAME)
-eval_env = gym.make(ENV_NAME)
+env      = gym.make(ENV_NAME, forward_reward_weight=FORWARD_REWARD_WEIGHT,
+                     healthy_reward=HEALTHY_REWARD, contact_cost_weight=CONTACT_COST_WEIGHT)
+eval_env = gym.make(ENV_NAME, forward_reward_weight=FORWARD_REWARD_WEIGHT,
+                     healthy_reward=HEALTHY_REWARD, contact_cost_weight=CONTACT_COST_WEIGHT)
 env.reset(seed=SEED)
 eval_env.reset(seed=SEED + 1)
 torch.manual_seed(SEED)
@@ -81,10 +91,12 @@ for t in range(1, MAX_TIMESTEPS + 1):
 
     next_obs, reward, terminated, truncated, info = env.step(action)
 
-    # 邊界位置懲罰：超出 MAX_RADIUS 後線性懲罰並截斷（不用 terminated，避免影響 Q 值 bootstrap）
+    # 邊界位置懲罰：超過 SOFT_RADIUS 後漸增懲罰（事前梯度），超過 MAX_RADIUS 強制截斷
     dist = info["distance_from_origin"]
-    if dist > MAX_RADIUS:
-        reward -= BOUNDARY_PENALTY * (dist - MAX_RADIUS)
+    if dist > SOFT_RADIUS:
+        reward -= BOUNDARY_PENALTY * (dist - SOFT_RADIUS)
+    boundary_violation = dist > MAX_RADIUS
+    if boundary_violation:
         truncated = True
 
     # 動作正則化：幅度懲罰 + 相鄰動作差異懲罰（contact_cost 已內建於 Ant-v5 reward，不重複懲罰）
@@ -94,8 +106,9 @@ for t in range(1, MAX_TIMESTEPS + 1):
 
     done = terminated or truncated
 
-    # Store transition（done 用 terminated，不含 timeout truncation）
-    replay_buffer.add(obs, action, next_obs, reward, float(terminated))
+    # Store transition：出界視為 terminal（同 env 原生 terminated），讓 critic 學到「出界=沒有未來」
+    # 一般 timeout truncation 才不算 terminal，這裡是我們自訂的懲罰性截斷，必須讓 bootstrap 停止
+    replay_buffer.add(obs, action, next_obs, reward, float(terminated or boundary_violation))
     obs            = next_obs
     episode_reward += reward
 

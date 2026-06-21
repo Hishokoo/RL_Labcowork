@@ -1,0 +1,1342 @@
+Device: cpu
+Env: Ant-v5  obs=105  act=8  max_action=1.0
+[T=     68] ep=   1  steps=  68  reward=-118.1
+[T=    109] ep=   2  steps=  41  reward=-95.1
+[T=    128] ep=   3  steps=  19  reward=-36.0
+[T=   1128] ep=   4  steps=1000  reward=-5487.8
+[T=   1446] ep=   5  steps= 318  reward=-486.7
+[T=   2446] ep=   6  steps=1000  reward=-1462.9
+[T=   2460] ep=   7  steps=  14  reward=-20.4
+[T=   2479] ep=   8  steps=  19  reward=-35.2
+[T=   2789] ep=   9  steps= 310  reward=-418.8
+[T=   2901] ep=  10  steps= 112  reward=-136.1
+[T=   2976] ep=  11  steps=  75  reward=-166.4
+[T=   3021] ep=  12  steps=  45  reward=-75.6
+[T=   3049] ep=  13  steps=  28  reward=-17.2
+[T=   3085] ep=  14  steps=  36  reward=-60.1
+[T=   3132] ep=  15  steps=  47  reward=-71.8
+[T=   3164] ep=  16  steps=  32  reward=-69.1
+[T=   3208] ep=  17  steps=  44  reward=-73.2
+[T=   3310] ep=  18  steps= 102  reward=-168.5
+[T=   3566] ep=  19  steps= 256  reward=-396.4
+[T=   3610] ep=  20  steps=  44  reward=-71.7
+[T=   3758] ep=  21  steps= 148  reward=-270.2
+[T=   3825] ep=  22  steps=  67  reward=-84.1
+[T=   3849] ep=  23  steps=  24  reward=-45.1
+[T=   3916] ep=  24  steps=  67  reward=-123.5
+[T=   4021] ep=  25  steps= 105  reward=-204.7
+  >>> Eval T=5000  avg_reward=968.0
+[T=   5021] ep=  26  steps=1000  reward=-1493.5
+[T=   6021] ep=  27  steps=1000  reward=-1465.5
+[T=   6211] ep=  28  steps= 190  reward=-280.9
+[T=   6246] ep=  29  steps=  35  reward=-45.4
+[T=   6308] ep=  30  steps=  62  reward=-124.1
+[T=   6392] ep=  31  steps=  84  reward=-131.0
+[T=   6505] ep=  32  steps= 113  reward=-158.3
+[T=   6632] ep=  33  steps= 127  reward=-168.3
+[T=   7632] ep=  34  steps=1000  reward=-1503.6
+[T=   7751] ep=  35  steps= 119  reward=-172.0
+[T=   7805] ep=  36  steps=  54  reward=-59.1
+[T=   7830] ep=  37  steps=  25  reward=-42.8
+[T=   7915] ep=  38  steps=  85  reward=-129.2
+[T=   8045] ep=  39  steps= 130  reward=-147.3
+[T=   8086] ep=  40  steps=  41  reward=-120.2
+[T=   8100] ep=  41  steps=  14  reward=-45.8
+[T=   9100] ep=  42  steps=1000  reward=-1465.5
+[T=   9188] ep=  43  steps=  88  reward=-170.8
+[T=   9277] ep=  44  steps=  89  reward=-122.3
+[T=   9321] ep=  45  steps=  44  reward=-69.4
+[T=   9563] ep=  46  steps= 242  reward=-459.2
+[T=   9616] ep=  47  steps=  53  reward=-41.2
+[T=   9650] ep=  48  steps=  34  reward=-48.8
+[T=   9706] ep=  49  steps=  56  reward=-82.4
+[T=   9772] ep=  50  steps=  66  reward=-161.3
+[T=   9796] ep=  51  steps=  24  reward=-66.5
+[T=   9830] ep=  52  steps=  34  reward=-74.5
+[T=   9866] ep=  53  steps=  36  reward=-42.9
+[T=   9918] ep=  54  steps=  52  reward=-53.8
+  >>> Eval T=10000  avg_reward=969.3
+[T=  10003] ep=  55  steps=  85  reward=-125.5
+[T=  10037] ep=  56  steps=  34  reward=-36.1
+[T=  10156] ep=  57  steps= 119  reward=-205.0
+[T=  10242] ep=  58  steps=  86  reward=-241.6
+[T=  10266] ep=  59  steps=  24  reward=-47.5
+[T=  10302] ep=  60  steps=  36  reward=-48.3
+[T=  10445] ep=  61  steps= 143  reward=-183.6
+[T=  10719] ep=  62  steps= 274  reward=-414.8
+[T=  10742] ep=  63  steps=  23  reward=-40.0
+[T=  10757] ep=  64  steps=  15  reward=-30.2
+[T=  10817] ep=  65  steps=  60  reward=-110.9
+[T=  10845] ep=  66  steps=  28  reward=-51.8
+[T=  11845] ep=  67  steps=1000  reward=-1465.6
+[T=  11954] ep=  68  steps= 109  reward=-145.7
+[T=  12954] ep=  69  steps=1000  reward=-1364.7
+[T=  12982] ep=  70  steps=  28  reward=-28.9
+[T=  13016] ep=  71  steps=  34  reward=-57.1
+[T=  13093] ep=  72  steps=  77  reward=-117.3
+[T=  13168] ep=  73  steps=  75  reward=-88.4
+[T=  14168] ep=  74  steps=1000  reward=-1534.5
+[T=  14272] ep=  75  steps= 104  reward=-146.3
+[T=  14376] ep=  76  steps= 104  reward=-175.6
+  >>> Eval T=15000  avg_reward=972.4
+[T=  15376] ep=  77  steps=1000  reward=-1444.3
+[T=  15471] ep=  78  steps=  95  reward=-150.9
+[T=  15534] ep=  79  steps=  63  reward=-67.1
+[T=  15602] ep=  80  steps=  68  reward=-135.2
+[T=  15658] ep=  81  steps=  56  reward=-94.9
+[T=  15775] ep=  82  steps= 117  reward=-178.1
+[T=  15803] ep=  83  steps=  28  reward=-19.4
+[T=  15925] ep=  84  steps= 122  reward=-232.5
+[T=  16115] ep=  85  steps= 190  reward=-322.3
+[T=  16145] ep=  86  steps=  30  reward=-55.4
+[T=  16170] ep=  87  steps=  25  reward=-50.7
+[T=  16262] ep=  88  steps=  92  reward=-158.7
+[T=  16329] ep=  89  steps=  67  reward=-91.9
+[T=  16526] ep=  90  steps= 197  reward=-330.8
+[T=  16590] ep=  91  steps=  64  reward=-68.3
+[T=  16686] ep=  92  steps=  96  reward=-131.3
+[T=  17686] ep=  93  steps=1000  reward=-1447.0
+[T=  17707] ep=  94  steps=  21  reward=-29.5
+[T=  17784] ep=  95  steps=  77  reward=-100.2
+[T=  17830] ep=  96  steps=  46  reward=-74.6
+[T=  17869] ep=  97  steps=  39  reward=-65.7
+[T=  18034] ep=  98  steps= 165  reward=-291.9
+[T=  18088] ep=  99  steps=  54  reward=-125.6
+[T=  18138] ep= 100  steps=  50  reward=-85.2
+[T=  18272] ep= 101  steps= 134  reward=-224.5
+[T=  18328] ep= 102  steps=  56  reward=-84.7
+[T=  18457] ep= 103  steps= 129  reward=-184.8
+[T=  18493] ep= 104  steps=  36  reward=-55.7
+[T=  18509] ep= 105  steps=  16  reward=-27.1
+[T=  18552] ep= 106  steps=  43  reward=-68.7
+[T=  18696] ep= 107  steps= 144  reward=-299.6
+[T=  18880] ep= 108  steps= 184  reward=-312.8
+[T=  18992] ep= 109  steps= 112  reward=-136.1
+[T=  19010] ep= 110  steps=  18  reward=-22.7
+[T=  19038] ep= 111  steps=  28  reward=-29.2
+[T=  19080] ep= 112  steps=  42  reward=-68.5
+[T=  19136] ep= 113  steps=  56  reward=-84.6
+[T=  19179] ep= 114  steps=  43  reward=-79.7
+[T=  19309] ep= 115  steps= 130  reward=-203.1
+  >>> Eval T=20000  avg_reward=969.0
+[T=  20309] ep= 116  steps=1000  reward=-1547.5
+[T=  20367] ep= 117  steps=  58  reward=-92.3
+[T=  20392] ep= 118  steps=  25  reward=-27.9
+[T=  20427] ep= 119  steps=  35  reward=-64.2
+[T=  20463] ep= 120  steps=  36  reward=-39.5
+[T=  20519] ep= 121  steps=  56  reward=-185.4
+[T=  20559] ep= 122  steps=  40  reward=-51.5
+[T=  20578] ep= 123  steps=  19  reward=-33.0
+[T=  20833] ep= 124  steps= 255  reward=-428.0
+[T=  21016] ep= 125  steps= 183  reward=-304.4
+[T=  21054] ep= 126  steps=  38  reward=-65.1
+[T=  21166] ep= 127  steps= 112  reward=-173.8
+[T=  21321] ep= 128  steps= 155  reward=-229.6
+[T=  21368] ep= 129  steps=  47  reward=-83.8
+[T=  21515] ep= 130  steps= 147  reward=-200.5
+[T=  22515] ep= 131  steps=1000  reward=-1446.1
+[T=  22532] ep= 132  steps=  17  reward=-18.4
+[T=  22609] ep= 133  steps=  77  reward=-175.5
+[T=  22629] ep= 134  steps=  20  reward=-63.2
+[T=  22661] ep= 135  steps=  32  reward=-64.6
+[T=  22688] ep= 136  steps=  27  reward=-78.7
+[T=  22788] ep= 137  steps= 100  reward=-174.9
+[T=  23788] ep= 138  steps=1000  reward=-1430.2
+[T=  23860] ep= 139  steps=  72  reward=-75.6
+[T=  23906] ep= 140  steps=  46  reward=-64.7
+[T=  23946] ep= 141  steps=  40  reward=-110.5
+[T=  24946] ep= 142  steps=1000  reward=-1497.6
+[T=  24992] ep= 143  steps=  46  reward=-71.3
+  >>> Eval T=25000  avg_reward=972.0
+[T=  25992] ep= 144  steps=1000  reward=-1011.5
+[T=  26992] ep= 145  steps=1000  reward=500.6
+[T=  27992] ep= 146  steps=1000  reward=-212.8
+[T=  28992] ep= 147  steps=1000  reward=289.5
+[T=  29992] ep= 148  steps=1000  reward=380.8
+  >>> Eval T=30000  avg_reward=692.6
+[T=  30992] ep= 149  steps=1000  reward=524.4
+[T=  31992] ep= 150  steps=1000  reward=379.5
+[T=  32992] ep= 151  steps=1000  reward=509.6
+[T=  33992] ep= 152  steps=1000  reward=409.5
+[T=  34992] ep= 153  steps=1000  reward=400.6
+  >>> Eval T=35000  avg_reward=773.4
+[T=  35992] ep= 154  steps=1000  reward=467.5
+[T=  36992] ep= 155  steps=1000  reward=530.1
+[T=  37992] ep= 156  steps=1000  reward=553.2
+[T=  38992] ep= 157  steps=1000  reward=486.3
+[T=  39992] ep= 158  steps=1000  reward=416.6
+  >>> Eval T=40000  avg_reward=766.4
+[T=  40992] ep= 159  steps=1000  reward=415.7
+[T=  41992] ep= 160  steps=1000  reward=360.2
+[T=  42992] ep= 161  steps=1000  reward=539.9
+[T=  43992] ep= 162  steps=1000  reward=378.0
+[T=  44992] ep= 163  steps=1000  reward=360.4
+  >>> Eval T=45000  avg_reward=727.7
+[T=  45992] ep= 164  steps=1000  reward=465.0
+[T=  46992] ep= 165  steps=1000  reward=477.2
+[T=  47992] ep= 166  steps=1000  reward=430.7
+[T=  48992] ep= 167  steps=1000  reward=563.9
+[T=  49992] ep= 168  steps=1000  reward=523.7
+  >>> Eval T=50000  avg_reward=739.0
+[T=  50992] ep= 169  steps=1000  reward=550.0
+[T=  51894] ep= 170  steps= 902  reward=-112.9
+[T=  52894] ep= 171  steps=1000  reward=478.0
+[T=  53894] ep= 172  steps=1000  reward=-493.6
+[T=  54603] ep= 173  steps= 709  reward=340.4
+  >>> Eval T=55000  avg_reward=767.5
+[T=  55603] ep= 174  steps=1000  reward=516.0
+[T=  56055] ep= 175  steps= 452  reward=272.3
+[T=  57055] ep= 176  steps=1000  reward=571.7
+[T=  57970] ep= 177  steps= 915  reward=-949.3
+[T=  58970] ep= 178  steps=1000  reward=546.6
+[T=  59970] ep= 179  steps=1000  reward=563.4
+  >>> Eval T=60000  avg_reward=794.1
+[T=  60970] ep= 180  steps=1000  reward=573.3
+[T=  61970] ep= 181  steps=1000  reward=266.4
+[T=  62970] ep= 182  steps=1000  reward=549.9
+[T=  63723] ep= 183  steps= 753  reward=-207.0
+[T=  64723] ep= 184  steps=1000  reward=-95.5
+  >>> Eval T=65000  avg_reward=812.9
+[T=  65723] ep= 185  steps=1000  reward=407.2
+[T=  66723] ep= 186  steps=1000  reward=529.0
+[T=  67723] ep= 187  steps=1000  reward=517.0
+[T=  68723] ep= 188  steps=1000  reward=470.0
+[T=  69723] ep= 189  steps=1000  reward=530.8
+  >>> Eval T=70000  avg_reward=757.1
+[T=  70723] ep= 190  steps=1000  reward=545.2
+[T=  71723] ep= 191  steps=1000  reward=518.5
+[T=  72723] ep= 192  steps=1000  reward=539.9
+[T=  73723] ep= 193  steps=1000  reward=510.8
+[T=  74723] ep= 194  steps=1000  reward=516.0
+  >>> Eval T=75000  avg_reward=738.6
+[T=  75723] ep= 195  steps=1000  reward=527.0
+[T=  76723] ep= 196  steps=1000  reward=471.5
+[T=  77723] ep= 197  steps=1000  reward=556.9
+[T=  78723] ep= 198  steps=1000  reward=533.7
+[T=  79723] ep= 199  steps=1000  reward=490.0
+  >>> Eval T=80000  avg_reward=836.8
+[T=  80723] ep= 200  steps=1000  reward=531.4
+[T=  81723] ep= 201  steps=1000  reward=556.6
+[T=  82723] ep= 202  steps=1000  reward=548.6
+[T=  83723] ep= 203  steps=1000  reward=559.0
+[T=  84723] ep= 204  steps=1000  reward=538.5
+  >>> Eval T=85000  avg_reward=783.5
+[T=  85723] ep= 205  steps=1000  reward=537.3
+[T=  86723] ep= 206  steps=1000  reward=506.2
+[T=  87723] ep= 207  steps=1000  reward=568.5
+[T=  88723] ep= 208  steps=1000  reward=497.2
+[T=  89723] ep= 209  steps=1000  reward=546.0
+  >>> Eval T=90000  avg_reward=705.6
+[T=  90723] ep= 210  steps=1000  reward=567.6
+[T=  91723] ep= 211  steps=1000  reward=534.0
+[T=  92723] ep= 212  steps=1000  reward=544.2
+[T=  93723] ep= 213  steps=1000  reward=555.1
+[T=  94723] ep= 214  steps=1000  reward=553.6
+  >>> Eval T=95000  avg_reward=792.6
+[T=  95723] ep= 215  steps=1000  reward=568.6
+[T=  96723] ep= 216  steps=1000  reward=552.1
+[T=  96811] ep= 217  steps=  88  reward=42.8
+[T=  97811] ep= 218  steps=1000  reward=544.9
+[T=  98811] ep= 219  steps=1000  reward=532.8
+[T=  99811] ep= 220  steps=1000  reward=580.9
+  >>> Eval T=100000  avg_reward=819.1
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step100000.pt
+[T= 100811] ep= 221  steps=1000  reward=563.7
+[T= 101811] ep= 222  steps=1000  reward=571.1
+[T= 102811] ep= 223  steps=1000  reward=534.2
+[T= 103811] ep= 224  steps=1000  reward=577.7
+[T= 104811] ep= 225  steps=1000  reward=548.0
+  >>> Eval T=105000  avg_reward=773.4
+[T= 105811] ep= 226  steps=1000  reward=533.4
+[T= 106811] ep= 227  steps=1000  reward=536.2
+[T= 107811] ep= 228  steps=1000  reward=581.2
+[T= 108811] ep= 229  steps=1000  reward=575.7
+[T= 109811] ep= 230  steps=1000  reward=555.8
+  >>> Eval T=110000  avg_reward=802.2
+[T= 110811] ep= 231  steps=1000  reward=594.7
+[T= 111811] ep= 232  steps=1000  reward=571.8
+[T= 112811] ep= 233  steps=1000  reward=551.6
+[T= 113811] ep= 234  steps=1000  reward=587.5
+[T= 114811] ep= 235  steps=1000  reward=565.1
+  >>> Eval T=115000  avg_reward=810.3
+[T= 115811] ep= 236  steps=1000  reward=576.6
+[T= 116811] ep= 237  steps=1000  reward=585.5
+[T= 117811] ep= 238  steps=1000  reward=552.2
+[T= 118811] ep= 239  steps=1000  reward=591.0
+[T= 119811] ep= 240  steps=1000  reward=576.5
+  >>> Eval T=120000  avg_reward=841.8
+[T= 120811] ep= 241  steps=1000  reward=544.0
+[T= 121811] ep= 242  steps=1000  reward=578.5
+[T= 122811] ep= 243  steps=1000  reward=610.5
+[T= 123811] ep= 244  steps=1000  reward=565.7
+[T= 124811] ep= 245  steps=1000  reward=559.7
+  >>> Eval T=125000  avg_reward=803.0
+[T= 125811] ep= 246  steps=1000  reward=587.6
+[T= 126811] ep= 247  steps=1000  reward=602.9
+[T= 127811] ep= 248  steps=1000  reward=567.1
+[T= 128811] ep= 249  steps=1000  reward=622.6
+[T= 129811] ep= 250  steps=1000  reward=605.4
+  >>> Eval T=130000  avg_reward=813.8
+[T= 130811] ep= 251  steps=1000  reward=600.8
+[T= 131811] ep= 252  steps=1000  reward=599.9
+[T= 132811] ep= 253  steps=1000  reward=557.6
+[T= 133811] ep= 254  steps=1000  reward=593.8
+[T= 134811] ep= 255  steps=1000  reward=566.0
+  >>> Eval T=135000  avg_reward=834.2
+[T= 135811] ep= 256  steps=1000  reward=585.0
+[T= 136811] ep= 257  steps=1000  reward=599.2
+[T= 137811] ep= 258  steps=1000  reward=600.0
+[T= 138811] ep= 259  steps=1000  reward=604.7
+[T= 139811] ep= 260  steps=1000  reward=571.1
+  >>> Eval T=140000  avg_reward=819.7
+[T= 140811] ep= 261  steps=1000  reward=605.0
+[T= 141811] ep= 262  steps=1000  reward=593.7
+[T= 142811] ep= 263  steps=1000  reward=554.7
+[T= 143811] ep= 264  steps=1000  reward=578.2
+[T= 144811] ep= 265  steps=1000  reward=599.7
+  >>> Eval T=145000  avg_reward=848.3
+[T= 145811] ep= 266  steps=1000  reward=580.9
+[T= 146811] ep= 267  steps=1000  reward=601.2
+[T= 147811] ep= 268  steps=1000  reward=585.9
+[T= 148811] ep= 269  steps=1000  reward=594.7
+[T= 149811] ep= 270  steps=1000  reward=577.4
+  >>> Eval T=150000  avg_reward=814.4
+[T= 150811] ep= 271  steps=1000  reward=583.5
+[T= 151811] ep= 272  steps=1000  reward=587.8
+[T= 152811] ep= 273  steps=1000  reward=583.3
+[T= 153811] ep= 274  steps=1000  reward=590.4
+[T= 154811] ep= 275  steps=1000  reward=599.8
+  >>> Eval T=155000  avg_reward=844.3
+[T= 155811] ep= 276  steps=1000  reward=597.1
+[T= 156811] ep= 277  steps=1000  reward=562.8
+[T= 157811] ep= 278  steps=1000  reward=590.8
+[T= 158811] ep= 279  steps=1000  reward=581.9
+[T= 159811] ep= 280  steps=1000  reward=591.1
+  >>> Eval T=160000  avg_reward=853.2
+[T= 160811] ep= 281  steps=1000  reward=595.3
+[T= 161811] ep= 282  steps=1000  reward=605.9
+[T= 162811] ep= 283  steps=1000  reward=584.7
+[T= 163811] ep= 284  steps=1000  reward=610.2
+[T= 164811] ep= 285  steps=1000  reward=598.1
+  >>> Eval T=165000  avg_reward=854.1
+[T= 165811] ep= 286  steps=1000  reward=556.7
+[T= 166811] ep= 287  steps=1000  reward=610.7
+[T= 167811] ep= 288  steps=1000  reward=603.4
+[T= 168811] ep= 289  steps=1000  reward=581.6
+[T= 169811] ep= 290  steps=1000  reward=604.1
+  >>> Eval T=170000  avg_reward=855.6
+[T= 170811] ep= 291  steps=1000  reward=600.7
+[T= 171811] ep= 292  steps=1000  reward=579.9
+[T= 172811] ep= 293  steps=1000  reward=593.6
+[T= 173811] ep= 294  steps=1000  reward=594.3
+[T= 174811] ep= 295  steps=1000  reward=598.3
+  >>> Eval T=175000  avg_reward=869.7
+[T= 175811] ep= 296  steps=1000  reward=565.2
+[T= 176811] ep= 297  steps=1000  reward=606.4
+[T= 177811] ep= 298  steps=1000  reward=596.7
+[T= 178811] ep= 299  steps=1000  reward=611.5
+[T= 179811] ep= 300  steps=1000  reward=604.3
+  >>> Eval T=180000  avg_reward=853.3
+[T= 180811] ep= 301  steps=1000  reward=623.0
+[T= 181811] ep= 302  steps=1000  reward=604.1
+[T= 182811] ep= 303  steps=1000  reward=597.8
+[T= 183811] ep= 304  steps=1000  reward=604.7
+[T= 184811] ep= 305  steps=1000  reward=628.3
+  >>> Eval T=185000  avg_reward=859.7
+[T= 185811] ep= 306  steps=1000  reward=600.1
+[T= 186811] ep= 307  steps=1000  reward=602.6
+[T= 187811] ep= 308  steps=1000  reward=603.1
+[T= 188811] ep= 309  steps=1000  reward=616.8
+[T= 189811] ep= 310  steps=1000  reward=600.4
+  >>> Eval T=190000  avg_reward=879.0
+[T= 190811] ep= 311  steps=1000  reward=622.7
+[T= 191811] ep= 312  steps=1000  reward=615.7
+[T= 192811] ep= 313  steps=1000  reward=624.8
+[T= 193811] ep= 314  steps=1000  reward=611.3
+[T= 194811] ep= 315  steps=1000  reward=607.5
+  >>> Eval T=195000  avg_reward=880.8
+[T= 195811] ep= 316  steps=1000  reward=619.0
+[T= 196811] ep= 317  steps=1000  reward=614.3
+[T= 197811] ep= 318  steps=1000  reward=616.7
+[T= 198811] ep= 319  steps=1000  reward=615.4
+[T= 199811] ep= 320  steps=1000  reward=620.9
+  >>> Eval T=200000  avg_reward=867.8
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step200000.pt
+[T= 200811] ep= 321  steps=1000  reward=625.3
+[T= 201811] ep= 322  steps=1000  reward=625.3
+[T= 202811] ep= 323  steps=1000  reward=628.9
+[T= 203811] ep= 324  steps=1000  reward=617.1
+[T= 204811] ep= 325  steps=1000  reward=622.8
+  >>> Eval T=205000  avg_reward=874.8
+[T= 205811] ep= 326  steps=1000  reward=619.3
+[T= 206811] ep= 327  steps=1000  reward=633.7
+[T= 207811] ep= 328  steps=1000  reward=605.5
+[T= 208811] ep= 329  steps=1000  reward=605.1
+[T= 209811] ep= 330  steps=1000  reward=621.3
+  >>> Eval T=210000  avg_reward=870.7
+[T= 210811] ep= 331  steps=1000  reward=622.3
+[T= 211811] ep= 332  steps=1000  reward=566.5
+[T= 212811] ep= 333  steps=1000  reward=598.6
+[T= 213811] ep= 334  steps=1000  reward=622.9
+[T= 214811] ep= 335  steps=1000  reward=620.5
+  >>> Eval T=215000  avg_reward=872.7
+[T= 215811] ep= 336  steps=1000  reward=611.9
+[T= 216811] ep= 337  steps=1000  reward=633.3
+[T= 217811] ep= 338  steps=1000  reward=599.0
+[T= 218811] ep= 339  steps=1000  reward=634.5
+[T= 219811] ep= 340  steps=1000  reward=625.7
+  >>> Eval T=220000  avg_reward=876.1
+[T= 220811] ep= 341  steps=1000  reward=621.3
+[T= 221811] ep= 342  steps=1000  reward=589.9
+[T= 222811] ep= 343  steps=1000  reward=627.1
+[T= 223811] ep= 344  steps=1000  reward=596.1
+[T= 224811] ep= 345  steps=1000  reward=626.1
+  >>> Eval T=225000  avg_reward=908.8
+[T= 225811] ep= 346  steps=1000  reward=632.0
+[T= 226811] ep= 347  steps=1000  reward=643.9
+[T= 227811] ep= 348  steps=1000  reward=603.9
+[T= 228811] ep= 349  steps=1000  reward=633.2
+[T= 229811] ep= 350  steps=1000  reward=601.3
+  >>> Eval T=230000  avg_reward=891.4
+[T= 230811] ep= 351  steps=1000  reward=590.2
+[T= 231811] ep= 352  steps=1000  reward=626.3
+[T= 232811] ep= 353  steps=1000  reward=620.2
+[T= 233811] ep= 354  steps=1000  reward=600.4
+[T= 234811] ep= 355  steps=1000  reward=637.8
+  >>> Eval T=235000  avg_reward=913.7
+[T= 235811] ep= 356  steps=1000  reward=596.8
+[T= 236811] ep= 357  steps=1000  reward=602.2
+[T= 237811] ep= 358  steps=1000  reward=627.3
+[T= 238811] ep= 359  steps=1000  reward=635.6
+[T= 239811] ep= 360  steps=1000  reward=629.3
+  >>> Eval T=240000  avg_reward=890.2
+[T= 240811] ep= 361  steps=1000  reward=633.2
+[T= 241811] ep= 362  steps=1000  reward=639.5
+[T= 242811] ep= 363  steps=1000  reward=641.9
+[T= 243811] ep= 364  steps=1000  reward=618.7
+[T= 244811] ep= 365  steps=1000  reward=623.7
+  >>> Eval T=245000  avg_reward=910.0
+[T= 245811] ep= 366  steps=1000  reward=620.2
+[T= 246811] ep= 367  steps=1000  reward=630.0
+[T= 247811] ep= 368  steps=1000  reward=616.1
+[T= 248811] ep= 369  steps=1000  reward=637.8
+[T= 249811] ep= 370  steps=1000  reward=623.6
+  >>> Eval T=250000  avg_reward=915.5
+[T= 250811] ep= 371  steps=1000  reward=641.9
+[T= 251811] ep= 372  steps=1000  reward=644.2
+[T= 252811] ep= 373  steps=1000  reward=643.5
+[T= 253811] ep= 374  steps=1000  reward=645.9
+[T= 254811] ep= 375  steps=1000  reward=643.7
+  >>> Eval T=255000  avg_reward=920.3
+[T= 255811] ep= 376  steps=1000  reward=636.5
+[T= 256811] ep= 377  steps=1000  reward=635.8
+[T= 257811] ep= 378  steps=1000  reward=650.1
+[T= 258811] ep= 379  steps=1000  reward=620.8
+[T= 259811] ep= 380  steps=1000  reward=657.3
+  >>> Eval T=260000  avg_reward=907.8
+[T= 260811] ep= 381  steps=1000  reward=646.8
+[T= 261811] ep= 382  steps=1000  reward=625.9
+[T= 262811] ep= 383  steps=1000  reward=650.7
+[T= 263811] ep= 384  steps=1000  reward=643.7
+[T= 264811] ep= 385  steps=1000  reward=643.9
+  >>> Eval T=265000  avg_reward=882.7
+[T= 265811] ep= 386  steps=1000  reward=632.3
+[T= 266811] ep= 387  steps=1000  reward=616.1
+[T= 267811] ep= 388  steps=1000  reward=632.5
+[T= 268811] ep= 389  steps=1000  reward=628.8
+[T= 269811] ep= 390  steps=1000  reward=642.4
+  >>> Eval T=270000  avg_reward=933.7
+[T= 270811] ep= 391  steps=1000  reward=625.3
+[T= 271811] ep= 392  steps=1000  reward=643.0
+[T= 272811] ep= 393  steps=1000  reward=636.7
+[T= 273811] ep= 394  steps=1000  reward=630.9
+[T= 274811] ep= 395  steps=1000  reward=647.3
+  >>> Eval T=275000  avg_reward=908.3
+[T= 275811] ep= 396  steps=1000  reward=648.3
+[T= 276811] ep= 397  steps=1000  reward=639.6
+[T= 277811] ep= 398  steps=1000  reward=649.5
+[T= 278811] ep= 399  steps=1000  reward=664.3
+[T= 279811] ep= 400  steps=1000  reward=653.1
+  >>> Eval T=280000  avg_reward=896.3
+[T= 280811] ep= 401  steps=1000  reward=640.8
+[T= 281811] ep= 402  steps=1000  reward=651.0
+[T= 282811] ep= 403  steps=1000  reward=597.4
+[T= 283811] ep= 404  steps=1000  reward=652.6
+[T= 284811] ep= 405  steps=1000  reward=643.6
+  >>> Eval T=285000  avg_reward=882.1
+[T= 285811] ep= 406  steps=1000  reward=642.2
+[T= 286811] ep= 407  steps=1000  reward=643.4
+[T= 287811] ep= 408  steps=1000  reward=647.2
+[T= 288811] ep= 409  steps=1000  reward=643.7
+[T= 289811] ep= 410  steps=1000  reward=658.9
+  >>> Eval T=290000  avg_reward=896.3
+[T= 290811] ep= 411  steps=1000  reward=638.4
+[T= 291811] ep= 412  steps=1000  reward=646.2
+[T= 292811] ep= 413  steps=1000  reward=645.8
+[T= 293811] ep= 414  steps=1000  reward=645.7
+[T= 294811] ep= 415  steps=1000  reward=644.0
+  >>> Eval T=295000  avg_reward=898.2
+[T= 295811] ep= 416  steps=1000  reward=647.3
+[T= 296811] ep= 417  steps=1000  reward=610.7
+[T= 297811] ep= 418  steps=1000  reward=644.1
+[T= 298811] ep= 419  steps=1000  reward=638.1
+[T= 299811] ep= 420  steps=1000  reward=641.0
+  >>> Eval T=300000  avg_reward=905.5
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step300000.pt
+[T= 300811] ep= 421  steps=1000  reward=646.4
+[T= 301811] ep= 422  steps=1000  reward=672.5
+[T= 302811] ep= 423  steps=1000  reward=653.3
+[T= 303811] ep= 424  steps=1000  reward=648.5
+[T= 304811] ep= 425  steps=1000  reward=617.8
+  >>> Eval T=305000  avg_reward=893.2
+[T= 305811] ep= 426  steps=1000  reward=648.2
+[T= 306811] ep= 427  steps=1000  reward=624.2
+[T= 307811] ep= 428  steps=1000  reward=651.8
+[T= 308811] ep= 429  steps=1000  reward=658.1
+[T= 309811] ep= 430  steps=1000  reward=624.2
+  >>> Eval T=310000  avg_reward=910.0
+[T= 310811] ep= 431  steps=1000  reward=610.9
+[T= 311811] ep= 432  steps=1000  reward=671.0
+[T= 312811] ep= 433  steps=1000  reward=658.5
+[T= 313811] ep= 434  steps=1000  reward=648.6
+[T= 314811] ep= 435  steps=1000  reward=659.3
+  >>> Eval T=315000  avg_reward=903.6
+[T= 315811] ep= 436  steps=1000  reward=640.8
+[T= 316811] ep= 437  steps=1000  reward=648.1
+[T= 317811] ep= 438  steps=1000  reward=651.7
+[T= 318811] ep= 439  steps=1000  reward=542.4
+[T= 319811] ep= 440  steps=1000  reward=639.0
+  >>> Eval T=320000  avg_reward=865.5
+[T= 320811] ep= 441  steps=1000  reward=645.8
+[T= 321811] ep= 442  steps=1000  reward=663.7
+[T= 322811] ep= 443  steps=1000  reward=659.5
+[T= 323811] ep= 444  steps=1000  reward=658.2
+[T= 324811] ep= 445  steps=1000  reward=608.3
+  >>> Eval T=325000  avg_reward=860.5
+[T= 325811] ep= 446  steps=1000  reward=657.4
+[T= 326811] ep= 447  steps=1000  reward=660.6
+[T= 327811] ep= 448  steps=1000  reward=648.1
+[T= 328811] ep= 449  steps=1000  reward=642.5
+[T= 329811] ep= 450  steps=1000  reward=651.1
+  >>> Eval T=330000  avg_reward=889.3
+[T= 330811] ep= 451  steps=1000  reward=664.9
+[T= 331811] ep= 452  steps=1000  reward=677.7
+[T= 332811] ep= 453  steps=1000  reward=664.5
+[T= 333811] ep= 454  steps=1000  reward=673.1
+[T= 334811] ep= 455  steps=1000  reward=675.1
+  >>> Eval T=335000  avg_reward=873.5
+[T= 335811] ep= 456  steps=1000  reward=673.3
+[T= 336811] ep= 457  steps=1000  reward=669.5
+[T= 337811] ep= 458  steps=1000  reward=661.6
+[T= 338811] ep= 459  steps=1000  reward=650.7
+[T= 339811] ep= 460  steps=1000  reward=634.5
+  >>> Eval T=340000  avg_reward=851.5
+[T= 340811] ep= 461  steps=1000  reward=675.7
+[T= 341811] ep= 462  steps=1000  reward=672.7
+[T= 342811] ep= 463  steps=1000  reward=640.2
+[T= 343811] ep= 464  steps=1000  reward=662.5
+[T= 344811] ep= 465  steps=1000  reward=591.3
+  >>> Eval T=345000  avg_reward=837.1
+[T= 345811] ep= 466  steps=1000  reward=676.2
+[T= 346811] ep= 467  steps=1000  reward=536.1
+[T= 347358] ep= 468  steps= 547  reward=-176.8
+[T= 348358] ep= 469  steps=1000  reward=659.2
+[T= 349358] ep= 470  steps=1000  reward=672.4
+  >>> Eval T=350000  avg_reward=902.5
+[T= 350358] ep= 471  steps=1000  reward=659.9
+[T= 351358] ep= 472  steps=1000  reward=684.6
+[T= 352358] ep= 473  steps=1000  reward=659.4
+[T= 353358] ep= 474  steps=1000  reward=669.9
+[T= 354358] ep= 475  steps=1000  reward=660.9
+  >>> Eval T=355000  avg_reward=880.7
+[T= 355358] ep= 476  steps=1000  reward=670.1
+[T= 356358] ep= 477  steps=1000  reward=630.7
+[T= 357358] ep= 478  steps=1000  reward=678.8
+[T= 358358] ep= 479  steps=1000  reward=659.0
+[T= 359358] ep= 480  steps=1000  reward=664.5
+  >>> Eval T=360000  avg_reward=927.0
+[T= 360358] ep= 481  steps=1000  reward=641.9
+[T= 361358] ep= 482  steps=1000  reward=689.4
+[T= 362358] ep= 483  steps=1000  reward=650.7
+[T= 363358] ep= 484  steps=1000  reward=652.8
+[T= 364358] ep= 485  steps=1000  reward=636.0
+  >>> Eval T=365000  avg_reward=859.6
+[T= 365358] ep= 486  steps=1000  reward=670.8
+[T= 366358] ep= 487  steps=1000  reward=690.0
+[T= 367358] ep= 488  steps=1000  reward=664.7
+[T= 368358] ep= 489  steps=1000  reward=671.4
+[T= 369358] ep= 490  steps=1000  reward=662.4
+  >>> Eval T=370000  avg_reward=908.7
+[T= 370358] ep= 491  steps=1000  reward=662.3
+[T= 371358] ep= 492  steps=1000  reward=666.6
+[T= 372358] ep= 493  steps=1000  reward=633.6
+[T= 373358] ep= 494  steps=1000  reward=652.6
+[T= 374358] ep= 495  steps=1000  reward=668.6
+  >>> Eval T=375000  avg_reward=894.5
+[T= 375358] ep= 496  steps=1000  reward=624.1
+[T= 376358] ep= 497  steps=1000  reward=670.5
+[T= 377358] ep= 498  steps=1000  reward=644.3
+[T= 378358] ep= 499  steps=1000  reward=609.8
+[T= 379358] ep= 500  steps=1000  reward=525.2
+  >>> Eval T=380000  avg_reward=752.8
+[T= 380358] ep= 501  steps=1000  reward=676.4
+[T= 381358] ep= 502  steps=1000  reward=530.8
+[T= 382358] ep= 503  steps=1000  reward=677.4
+[T= 383358] ep= 504  steps=1000  reward=595.6
+[T= 384358] ep= 505  steps=1000  reward=651.0
+  >>> Eval T=385000  avg_reward=917.6
+[T= 385358] ep= 506  steps=1000  reward=630.4
+[T= 386358] ep= 507  steps=1000  reward=601.9
+[T= 387358] ep= 508  steps=1000  reward=683.1
+[T= 388358] ep= 509  steps=1000  reward=685.8
+[T= 389358] ep= 510  steps=1000  reward=666.9
+  >>> Eval T=390000  avg_reward=878.6
+[T= 390358] ep= 511  steps=1000  reward=689.6
+[T= 391358] ep= 512  steps=1000  reward=651.8
+[T= 392358] ep= 513  steps=1000  reward=640.8
+[T= 393358] ep= 514  steps=1000  reward=664.2
+[T= 394358] ep= 515  steps=1000  reward=655.2
+  >>> Eval T=395000  avg_reward=907.2
+[T= 395358] ep= 516  steps=1000  reward=680.1
+[T= 396358] ep= 517  steps=1000  reward=684.0
+[T= 397358] ep= 518  steps=1000  reward=654.4
+[T= 398358] ep= 519  steps=1000  reward=670.6
+[T= 399358] ep= 520  steps=1000  reward=506.9
+  >>> Eval T=400000  avg_reward=908.8
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step400000.pt
+[T= 400358] ep= 521  steps=1000  reward=664.4
+[T= 401358] ep= 522  steps=1000  reward=623.4
+[T= 402358] ep= 523  steps=1000  reward=657.4
+[T= 403358] ep= 524  steps=1000  reward=683.9
+[T= 404358] ep= 525  steps=1000  reward=661.6
+  >>> Eval T=405000  avg_reward=873.5
+[T= 405358] ep= 526  steps=1000  reward=678.9
+[T= 406358] ep= 527  steps=1000  reward=644.3
+[T= 407358] ep= 528  steps=1000  reward=681.1
+[T= 408358] ep= 529  steps=1000  reward=680.3
+[T= 409358] ep= 530  steps=1000  reward=616.1
+  >>> Eval T=410000  avg_reward=896.4
+[T= 410358] ep= 531  steps=1000  reward=679.4
+[T= 411358] ep= 532  steps=1000  reward=666.9
+[T= 412358] ep= 533  steps=1000  reward=683.5
+[T= 413358] ep= 534  steps=1000  reward=630.6
+[T= 414358] ep= 535  steps=1000  reward=663.8
+  >>> Eval T=415000  avg_reward=919.0
+[T= 415358] ep= 536  steps=1000  reward=670.0
+[T= 416358] ep= 537  steps=1000  reward=674.2
+[T= 417358] ep= 538  steps=1000  reward=685.5
+[T= 418358] ep= 539  steps=1000  reward=677.1
+[T= 419358] ep= 540  steps=1000  reward=687.5
+  >>> Eval T=420000  avg_reward=936.3
+[T= 420358] ep= 541  steps=1000  reward=671.2
+[T= 421358] ep= 542  steps=1000  reward=679.4
+[T= 422358] ep= 543  steps=1000  reward=683.4
+[T= 423358] ep= 544  steps=1000  reward=665.8
+[T= 424358] ep= 545  steps=1000  reward=666.2
+  >>> Eval T=425000  avg_reward=890.4
+[T= 425358] ep= 546  steps=1000  reward=676.5
+[T= 426358] ep= 547  steps=1000  reward=674.2
+[T= 427358] ep= 548  steps=1000  reward=682.0
+[T= 428358] ep= 549  steps=1000  reward=675.5
+[T= 429358] ep= 550  steps=1000  reward=673.4
+  >>> Eval T=430000  avg_reward=931.2
+[T= 430358] ep= 551  steps=1000  reward=666.1
+[T= 431358] ep= 552  steps=1000  reward=684.3
+[T= 432358] ep= 553  steps=1000  reward=683.4
+[T= 433358] ep= 554  steps=1000  reward=675.3
+[T= 434358] ep= 555  steps=1000  reward=670.9
+  >>> Eval T=435000  avg_reward=889.2
+[T= 435358] ep= 556  steps=1000  reward=677.2
+[T= 436358] ep= 557  steps=1000  reward=678.7
+[T= 437358] ep= 558  steps=1000  reward=636.6
+[T= 438358] ep= 559  steps=1000  reward=655.1
+[T= 439358] ep= 560  steps=1000  reward=642.9
+  >>> Eval T=440000  avg_reward=941.9
+[T= 440358] ep= 561  steps=1000  reward=618.4
+[T= 441358] ep= 562  steps=1000  reward=627.2
+[T= 442358] ep= 563  steps=1000  reward=457.3
+[T= 443358] ep= 564  steps=1000  reward=614.7
+[T= 444358] ep= 565  steps=1000  reward=609.3
+  >>> Eval T=445000  avg_reward=874.8
+[T= 445358] ep= 566  steps=1000  reward=603.3
+[T= 446358] ep= 567  steps=1000  reward=597.3
+[T= 447358] ep= 568  steps=1000  reward=594.5
+[T= 448358] ep= 569  steps=1000  reward=581.7
+[T= 449358] ep= 570  steps=1000  reward=579.2
+  >>> Eval T=450000  avg_reward=861.4
+[T= 450358] ep= 571  steps=1000  reward=589.1
+[T= 451358] ep= 572  steps=1000  reward=572.2
+[T= 452358] ep= 573  steps=1000  reward=593.2
+[T= 453086] ep= 574  steps= 728  reward=228.3
+[T= 453701] ep= 575  steps= 615  reward=169.4
+[T= 454458] ep= 576  steps= 757  reward=245.4
+  >>> Eval T=455000  avg_reward=833.6
+[T= 455458] ep= 577  steps=1000  reward=598.4
+[T= 456458] ep= 578  steps=1000  reward=384.6
+[T= 457458] ep= 579  steps=1000  reward=443.2
+[T= 458458] ep= 580  steps=1000  reward=464.9
+[T= 459458] ep= 581  steps=1000  reward=519.7
+  >>> Eval T=460000  avg_reward=878.6
+[T= 460458] ep= 582  steps=1000  reward=490.2
+[T= 461458] ep= 583  steps=1000  reward=393.6
+[T= 462458] ep= 584  steps=1000  reward=456.7
+[T= 463458] ep= 585  steps=1000  reward=500.9
+[T= 464458] ep= 586  steps=1000  reward=506.3
+  >>> Eval T=465000  avg_reward=874.6
+[T= 465458] ep= 587  steps=1000  reward=469.4
+[T= 466458] ep= 588  steps=1000  reward=565.9
+[T= 467458] ep= 589  steps=1000  reward=514.4
+[T= 468458] ep= 590  steps=1000  reward=530.8
+[T= 469458] ep= 591  steps=1000  reward=526.1
+  >>> Eval T=470000  avg_reward=837.2
+[T= 470458] ep= 592  steps=1000  reward=537.5
+[T= 471458] ep= 593  steps=1000  reward=582.4
+[T= 472458] ep= 594  steps=1000  reward=529.1
+[T= 473458] ep= 595  steps=1000  reward=569.2
+[T= 474458] ep= 596  steps=1000  reward=479.7
+  >>> Eval T=475000  avg_reward=861.7
+[T= 475458] ep= 597  steps=1000  reward=551.4
+[T= 476458] ep= 598  steps=1000  reward=560.8
+[T= 477458] ep= 599  steps=1000  reward=577.4
+[T= 478458] ep= 600  steps=1000  reward=564.1
+[T= 479458] ep= 601  steps=1000  reward=579.8
+  >>> Eval T=480000  avg_reward=846.8
+[T= 480458] ep= 602  steps=1000  reward=586.3
+[T= 481458] ep= 603  steps=1000  reward=592.8
+[T= 482458] ep= 604  steps=1000  reward=566.3
+[T= 483458] ep= 605  steps=1000  reward=585.2
+[T= 484458] ep= 606  steps=1000  reward=572.5
+  >>> Eval T=485000  avg_reward=840.9
+[T= 485458] ep= 607  steps=1000  reward=592.6
+[T= 486458] ep= 608  steps=1000  reward=558.3
+[T= 487458] ep= 609  steps=1000  reward=565.4
+[T= 488458] ep= 610  steps=1000  reward=500.3
+[T= 489458] ep= 611  steps=1000  reward=549.8
+  >>> Eval T=490000  avg_reward=836.4
+[T= 490458] ep= 612  steps=1000  reward=568.5
+[T= 491458] ep= 613  steps=1000  reward=544.4
+[T= 492458] ep= 614  steps=1000  reward=591.1
+[T= 493458] ep= 615  steps=1000  reward=562.2
+[T= 494458] ep= 616  steps=1000  reward=591.7
+  >>> Eval T=495000  avg_reward=866.6
+[T= 495458] ep= 617  steps=1000  reward=591.3
+[T= 496458] ep= 618  steps=1000  reward=596.8
+[T= 497458] ep= 619  steps=1000  reward=593.5
+[T= 498458] ep= 620  steps=1000  reward=587.0
+[T= 499458] ep= 621  steps=1000  reward=607.9
+  >>> Eval T=500000  avg_reward=891.8
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step500000.pt
+[T= 500458] ep= 622  steps=1000  reward=567.6
+[T= 501458] ep= 623  steps=1000  reward=615.7
+[T= 502458] ep= 624  steps=1000  reward=561.0
+[T= 503458] ep= 625  steps=1000  reward=554.3
+[T= 504458] ep= 626  steps=1000  reward=601.1
+  >>> Eval T=505000  avg_reward=896.6
+[T= 505458] ep= 627  steps=1000  reward=589.1
+[T= 506458] ep= 628  steps=1000  reward=626.9
+[T= 507458] ep= 629  steps=1000  reward=594.9
+[T= 508458] ep= 630  steps=1000  reward=599.5
+[T= 509458] ep= 631  steps=1000  reward=603.9
+  >>> Eval T=510000  avg_reward=888.1
+[T= 510458] ep= 632  steps=1000  reward=615.9
+[T= 511458] ep= 633  steps=1000  reward=572.5
+[T= 512458] ep= 634  steps=1000  reward=571.3
+[T= 513458] ep= 635  steps=1000  reward=558.4
+[T= 514007] ep= 636  steps= 549  reward=-314.3
+  >>> Eval T=515000  avg_reward=881.5
+[T= 515007] ep= 637  steps=1000  reward=571.4
+[T= 516007] ep= 638  steps=1000  reward=615.1
+[T= 517007] ep= 639  steps=1000  reward=586.7
+[T= 518007] ep= 640  steps=1000  reward=599.4
+[T= 519007] ep= 641  steps=1000  reward=617.1
+  >>> Eval T=520000  avg_reward=919.4
+[T= 520007] ep= 642  steps=1000  reward=591.8
+[T= 521007] ep= 643  steps=1000  reward=652.5
+[T= 522007] ep= 644  steps=1000  reward=591.0
+[T= 523007] ep= 645  steps=1000  reward=656.7
+[T= 524007] ep= 646  steps=1000  reward=533.9
+  >>> Eval T=525000  avg_reward=924.3
+[T= 525007] ep= 647  steps=1000  reward=593.3
+[T= 526007] ep= 648  steps=1000  reward=608.4
+[T= 527007] ep= 649  steps=1000  reward=597.0
+[T= 528007] ep= 650  steps=1000  reward=626.3
+[T= 529007] ep= 651  steps=1000  reward=617.3
+  >>> Eval T=530000  avg_reward=898.1
+[T= 530007] ep= 652  steps=1000  reward=616.1
+[T= 531007] ep= 653  steps=1000  reward=601.6
+[T= 532007] ep= 654  steps=1000  reward=594.9
+[T= 533007] ep= 655  steps=1000  reward=604.3
+[T= 534007] ep= 656  steps=1000  reward=585.7
+  >>> Eval T=535000  avg_reward=837.3
+[T= 535007] ep= 657  steps=1000  reward=552.5
+[T= 536007] ep= 658  steps=1000  reward=525.7
+[T= 537007] ep= 659  steps=1000  reward=629.7
+[T= 538007] ep= 660  steps=1000  reward=611.4
+[T= 539007] ep= 661  steps=1000  reward=511.4
+  >>> Eval T=540000  avg_reward=797.4
+[T= 540007] ep= 662  steps=1000  reward=520.3
+[T= 541007] ep= 663  steps=1000  reward=610.6
+[T= 542007] ep= 664  steps=1000  reward=572.0
+[T= 543007] ep= 665  steps=1000  reward=34.1
+[T= 544007] ep= 666  steps=1000  reward=608.4
+  >>> Eval T=545000  avg_reward=882.4
+[T= 545007] ep= 667  steps=1000  reward=602.7
+[T= 546007] ep= 668  steps=1000  reward=568.4
+[T= 547007] ep= 669  steps=1000  reward=550.4
+[T= 548007] ep= 670  steps=1000  reward=581.9
+[T= 549007] ep= 671  steps=1000  reward=642.9
+  >>> Eval T=550000  avg_reward=916.2
+[T= 550007] ep= 672  steps=1000  reward=597.8
+[T= 551007] ep= 673  steps=1000  reward=138.7
+[T= 552007] ep= 674  steps=1000  reward=484.9
+[T= 553007] ep= 675  steps=1000  reward=589.3
+[T= 554007] ep= 676  steps=1000  reward=609.4
+  >>> Eval T=555000  avg_reward=815.6
+[T= 555007] ep= 677  steps=1000  reward=639.2
+[T= 556007] ep= 678  steps=1000  reward=584.3
+[T= 557007] ep= 679  steps=1000  reward=576.6
+[T= 558007] ep= 680  steps=1000  reward=583.1
+[T= 559007] ep= 681  steps=1000  reward=637.2
+  >>> Eval T=560000  avg_reward=896.0
+[T= 560007] ep= 682  steps=1000  reward=623.4
+[T= 561007] ep= 683  steps=1000  reward=604.3
+[T= 562007] ep= 684  steps=1000  reward=499.3
+[T= 563007] ep= 685  steps=1000  reward=639.2
+[T= 564007] ep= 686  steps=1000  reward=648.9
+  >>> Eval T=565000  avg_reward=902.5
+[T= 565007] ep= 687  steps=1000  reward=426.8
+[T= 565042] ep= 688  steps=  35  reward=-23.1
+[T= 566042] ep= 689  steps=1000  reward=653.2
+[T= 567042] ep= 690  steps=1000  reward=655.0
+[T= 568042] ep= 691  steps=1000  reward=614.8
+[T= 569042] ep= 692  steps=1000  reward=641.6
+  >>> Eval T=570000  avg_reward=923.8
+[T= 570042] ep= 693  steps=1000  reward=639.2
+[T= 571042] ep= 694  steps=1000  reward=-2630.1
+[T= 572042] ep= 695  steps=1000  reward=638.7
+[T= 573042] ep= 696  steps=1000  reward=616.5
+[T= 574042] ep= 697  steps=1000  reward=647.5
+  >>> Eval T=575000  avg_reward=775.9
+[T= 575042] ep= 698  steps=1000  reward=362.6
+[T= 576042] ep= 699  steps=1000  reward=645.1
+[T= 577042] ep= 700  steps=1000  reward=646.9
+[T= 578042] ep= 701  steps=1000  reward=426.1
+[T= 579042] ep= 702  steps=1000  reward=603.1
+  >>> Eval T=580000  avg_reward=815.8
+[T= 580042] ep= 703  steps=1000  reward=412.3
+[T= 581042] ep= 704  steps=1000  reward=491.2
+[T= 582042] ep= 705  steps=1000  reward=482.3
+[T= 583042] ep= 706  steps=1000  reward=412.0
+[T= 584042] ep= 707  steps=1000  reward=656.2
+  >>> Eval T=585000  avg_reward=820.4
+[T= 585042] ep= 708  steps=1000  reward=631.4
+[T= 586042] ep= 709  steps=1000  reward=468.6
+[T= 587042] ep= 710  steps=1000  reward=608.0
+[T= 588042] ep= 711  steps=1000  reward=527.6
+[T= 589042] ep= 712  steps=1000  reward=606.1
+  >>> Eval T=590000  avg_reward=829.0
+[T= 590042] ep= 713  steps=1000  reward=579.0
+[T= 590081] ep= 714  steps=  39  reward=-24.0
+[T= 591081] ep= 715  steps=1000  reward=650.6
+[T= 592081] ep= 716  steps=1000  reward=598.0
+[T= 593081] ep= 717  steps=1000  reward=612.6
+[T= 594081] ep= 718  steps=1000  reward=626.2
+  >>> Eval T=595000  avg_reward=890.8
+[T= 595081] ep= 719  steps=1000  reward=579.3
+[T= 596081] ep= 720  steps=1000  reward=572.5
+[T= 597081] ep= 721  steps=1000  reward=624.2
+[T= 598081] ep= 722  steps=1000  reward=556.4
+[T= 599081] ep= 723  steps=1000  reward=556.5
+  >>> Eval T=600000  avg_reward=813.5
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step600000.pt
+[T= 600081] ep= 724  steps=1000  reward=619.5
+[T= 601081] ep= 725  steps=1000  reward=537.0
+[T= 602081] ep= 726  steps=1000  reward=573.2
+[T= 603081] ep= 727  steps=1000  reward=626.7
+[T= 604081] ep= 728  steps=1000  reward=577.6
+  >>> Eval T=605000  avg_reward=890.5
+[T= 605081] ep= 729  steps=1000  reward=620.1
+[T= 606081] ep= 730  steps=1000  reward=558.5
+[T= 607081] ep= 731  steps=1000  reward=425.7
+[T= 607105] ep= 732  steps=  24  reward=-43.5
+[T= 608105] ep= 733  steps=1000  reward=477.0
+[T= 609105] ep= 734  steps=1000  reward=378.1
+  >>> Eval T=610000  avg_reward=626.6
+[T= 610105] ep= 735  steps=1000  reward=440.1
+[T= 611105] ep= 736  steps=1000  reward=412.8
+[T= 612105] ep= 737  steps=1000  reward=431.9
+[T= 613105] ep= 738  steps=1000  reward=488.3
+[T= 614105] ep= 739  steps=1000  reward=398.8
+  >>> Eval T=615000  avg_reward=497.5
+[T= 615105] ep= 740  steps=1000  reward=114.3
+[T= 616105] ep= 741  steps=1000  reward=503.1
+[T= 617105] ep= 742  steps=1000  reward=323.3
+[T= 617162] ep= 743  steps=  57  reward=-98.4
+[T= 617201] ep= 744  steps=  39  reward=-39.5
+[T= 618201] ep= 745  steps=1000  reward=477.4
+[T= 619201] ep= 746  steps=1000  reward=512.9
+  >>> Eval T=620000  avg_reward=344.3
+[T= 620201] ep= 747  steps=1000  reward=534.5
+[T= 620218] ep= 748  steps=  17  reward=-9.3
+[T= 621218] ep= 749  steps=1000  reward=500.0
+[T= 622218] ep= 750  steps=1000  reward=432.3
+[T= 623218] ep= 751  steps=1000  reward=557.4
+[T= 624218] ep= 752  steps=1000  reward=522.9
+  >>> Eval T=625000  avg_reward=633.9
+[T= 625218] ep= 753  steps=1000  reward=535.3
+[T= 626218] ep= 754  steps=1000  reward=489.0
+[T= 627218] ep= 755  steps=1000  reward=436.5
+[T= 628218] ep= 756  steps=1000  reward=401.7
+[T= 629218] ep= 757  steps=1000  reward=567.4
+  >>> Eval T=630000  avg_reward=637.7
+[T= 630218] ep= 758  steps=1000  reward=6.3
+[T= 631218] ep= 759  steps=1000  reward=463.3
+[T= 632218] ep= 760  steps=1000  reward=542.4
+[T= 633218] ep= 761  steps=1000  reward=401.9
+[T= 634218] ep= 762  steps=1000  reward=519.4
+  >>> Eval T=635000  avg_reward=751.1
+[T= 635218] ep= 763  steps=1000  reward=511.0
+[T= 636218] ep= 764  steps=1000  reward=428.4
+[T= 637218] ep= 765  steps=1000  reward=461.2
+[T= 638218] ep= 766  steps=1000  reward=545.0
+[T= 639218] ep= 767  steps=1000  reward=422.2
+  >>> Eval T=640000  avg_reward=769.1
+[T= 640218] ep= 768  steps=1000  reward=386.4
+[T= 641218] ep= 769  steps=1000  reward=398.8
+[T= 642218] ep= 770  steps=1000  reward=409.6
+[T= 643218] ep= 771  steps=1000  reward=605.1
+[T= 644218] ep= 772  steps=1000  reward=523.9
+  >>> Eval T=645000  avg_reward=665.8
+[T= 645218] ep= 773  steps=1000  reward=564.8
+[T= 646218] ep= 774  steps=1000  reward=592.3
+[T= 647218] ep= 775  steps=1000  reward=581.5
+[T= 648218] ep= 776  steps=1000  reward=545.3
+[T= 649218] ep= 777  steps=1000  reward=499.1
+  >>> Eval T=650000  avg_reward=860.3
+[T= 650218] ep= 778  steps=1000  reward=504.2
+[T= 651218] ep= 779  steps=1000  reward=314.5
+[T= 652218] ep= 780  steps=1000  reward=444.8
+[T= 653218] ep= 781  steps=1000  reward=560.5
+[T= 654218] ep= 782  steps=1000  reward=429.0
+  >>> Eval T=655000  avg_reward=858.0
+[T= 655218] ep= 783  steps=1000  reward=333.9
+[T= 656218] ep= 784  steps=1000  reward=523.1
+[T= 657218] ep= 785  steps=1000  reward=507.6
+[T= 658218] ep= 786  steps=1000  reward=584.8
+[T= 659218] ep= 787  steps=1000  reward=576.6
+  >>> Eval T=660000  avg_reward=836.2
+[T= 660218] ep= 788  steps=1000  reward=574.6
+[T= 661218] ep= 789  steps=1000  reward=590.4
+[T= 662218] ep= 790  steps=1000  reward=601.3
+[T= 663218] ep= 791  steps=1000  reward=589.6
+[T= 664218] ep= 792  steps=1000  reward=555.5
+  >>> Eval T=665000  avg_reward=838.4
+[T= 665218] ep= 793  steps=1000  reward=469.0
+[T= 666218] ep= 794  steps=1000  reward=569.8
+[T= 667218] ep= 795  steps=1000  reward=554.2
+[T= 668218] ep= 796  steps=1000  reward=541.3
+[T= 669218] ep= 797  steps=1000  reward=615.7
+  >>> Eval T=670000  avg_reward=884.1
+[T= 670218] ep= 798  steps=1000  reward=592.7
+[T= 671218] ep= 799  steps=1000  reward=519.6
+[T= 672218] ep= 800  steps=1000  reward=612.1
+[T= 673218] ep= 801  steps=1000  reward=609.4
+[T= 674218] ep= 802  steps=1000  reward=425.1
+  >>> Eval T=675000  avg_reward=615.3
+[T= 675218] ep= 803  steps=1000  reward=626.6
+[T= 675233] ep= 804  steps=  15  reward=-35.3
+[T= 676233] ep= 805  steps=1000  reward=616.9
+[T= 677233] ep= 806  steps=1000  reward=561.1
+[T= 678233] ep= 807  steps=1000  reward=609.3
+[T= 679233] ep= 808  steps=1000  reward=568.1
+  >>> Eval T=680000  avg_reward=863.3
+[T= 680233] ep= 809  steps=1000  reward=610.5
+[T= 681233] ep= 810  steps=1000  reward=476.5
+[T= 682233] ep= 811  steps=1000  reward=-1954.0
+[T= 683233] ep= 812  steps=1000  reward=582.9
+[T= 684233] ep= 813  steps=1000  reward=577.7
+  >>> Eval T=685000  avg_reward=744.8
+[T= 685233] ep= 814  steps=1000  reward=533.0
+[T= 686233] ep= 815  steps=1000  reward=593.0
+[T= 687233] ep= 816  steps=1000  reward=617.7
+[T= 688233] ep= 817  steps=1000  reward=547.1
+[T= 689233] ep= 818  steps=1000  reward=535.3
+  >>> Eval T=690000  avg_reward=786.3
+[T= 690233] ep= 819  steps=1000  reward=473.0
+[T= 691233] ep= 820  steps=1000  reward=602.8
+[T= 692233] ep= 821  steps=1000  reward=601.3
+[T= 693233] ep= 822  steps=1000  reward=619.0
+[T= 694233] ep= 823  steps=1000  reward=622.3
+  >>> Eval T=695000  avg_reward=789.1
+[T= 695233] ep= 824  steps=1000  reward=601.3
+[T= 696233] ep= 825  steps=1000  reward=594.5
+[T= 697233] ep= 826  steps=1000  reward=590.7
+[T= 698233] ep= 827  steps=1000  reward=612.1
+[T= 699233] ep= 828  steps=1000  reward=612.8
+  >>> Eval T=700000  avg_reward=832.1
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step700000.pt
+[T= 700233] ep= 829  steps=1000  reward=588.2
+[T= 701233] ep= 830  steps=1000  reward=592.6
+[T= 702233] ep= 831  steps=1000  reward=567.7
+[T= 703233] ep= 832  steps=1000  reward=597.8
+[T= 704233] ep= 833  steps=1000  reward=583.8
+  >>> Eval T=705000  avg_reward=899.4
+[T= 705233] ep= 834  steps=1000  reward=587.5
+[T= 706233] ep= 835  steps=1000  reward=571.5
+[T= 707233] ep= 836  steps=1000  reward=595.4
+[T= 708233] ep= 837  steps=1000  reward=574.0
+[T= 709233] ep= 838  steps=1000  reward=521.5
+  >>> Eval T=710000  avg_reward=914.3
+[T= 710233] ep= 839  steps=1000  reward=612.1
+[T= 711233] ep= 840  steps=1000  reward=539.7
+[T= 712233] ep= 841  steps=1000  reward=580.7
+[T= 713233] ep= 842  steps=1000  reward=572.4
+[T= 714233] ep= 843  steps=1000  reward=570.6
+  >>> Eval T=715000  avg_reward=696.7
+[T= 715233] ep= 844  steps=1000  reward=582.7
+[T= 716233] ep= 845  steps=1000  reward=582.9
+[T= 717233] ep= 846  steps=1000  reward=594.0
+[T= 718233] ep= 847  steps=1000  reward=575.1
+[T= 719233] ep= 848  steps=1000  reward=584.6
+  >>> Eval T=720000  avg_reward=914.1
+[T= 720233] ep= 849  steps=1000  reward=594.9
+[T= 721233] ep= 850  steps=1000  reward=586.9
+[T= 722233] ep= 851  steps=1000  reward=568.9
+[T= 723233] ep= 852  steps=1000  reward=587.1
+[T= 724233] ep= 853  steps=1000  reward=573.7
+  >>> Eval T=725000  avg_reward=952.8
+[T= 725233] ep= 854  steps=1000  reward=596.5
+[T= 726233] ep= 855  steps=1000  reward=589.8
+[T= 727233] ep= 856  steps=1000  reward=593.5
+[T= 728233] ep= 857  steps=1000  reward=604.0
+[T= 729233] ep= 858  steps=1000  reward=615.4
+  >>> Eval T=730000  avg_reward=880.5
+[T= 730233] ep= 859  steps=1000  reward=536.8
+[T= 731233] ep= 860  steps=1000  reward=625.7
+[T= 732233] ep= 861  steps=1000  reward=599.0
+[T= 733233] ep= 862  steps=1000  reward=576.3
+[T= 734233] ep= 863  steps=1000  reward=599.4
+  >>> Eval T=735000  avg_reward=877.4
+[T= 735233] ep= 864  steps=1000  reward=580.4
+[T= 736233] ep= 865  steps=1000  reward=589.1
+[T= 737233] ep= 866  steps=1000  reward=605.7
+[T= 738233] ep= 867  steps=1000  reward=603.3
+[T= 739233] ep= 868  steps=1000  reward=608.0
+  >>> Eval T=740000  avg_reward=861.5
+[T= 740233] ep= 869  steps=1000  reward=601.1
+[T= 741233] ep= 870  steps=1000  reward=577.7
+[T= 742233] ep= 871  steps=1000  reward=287.7
+[T= 743233] ep= 872  steps=1000  reward=590.5
+[T= 744233] ep= 873  steps=1000  reward=601.0
+  >>> Eval T=745000  avg_reward=891.1
+[T= 745233] ep= 874  steps=1000  reward=565.5
+[T= 746233] ep= 875  steps=1000  reward=602.2
+[T= 747233] ep= 876  steps=1000  reward=572.6
+[T= 748233] ep= 877  steps=1000  reward=597.4
+[T= 749233] ep= 878  steps=1000  reward=607.7
+  >>> Eval T=750000  avg_reward=911.6
+[T= 750233] ep= 879  steps=1000  reward=610.3
+[T= 751233] ep= 880  steps=1000  reward=559.8
+[T= 752233] ep= 881  steps=1000  reward=587.9
+[T= 753233] ep= 882  steps=1000  reward=486.2
+[T= 754233] ep= 883  steps=1000  reward=566.1
+  >>> Eval T=755000  avg_reward=881.9
+[T= 755233] ep= 884  steps=1000  reward=592.6
+[T= 756233] ep= 885  steps=1000  reward=589.7
+[T= 757233] ep= 886  steps=1000  reward=464.6
+[T= 758233] ep= 887  steps=1000  reward=561.7
+[T= 759233] ep= 888  steps=1000  reward=574.3
+  >>> Eval T=760000  avg_reward=878.8
+[T= 760233] ep= 889  steps=1000  reward=519.5
+[T= 761233] ep= 890  steps=1000  reward=543.2
+[T= 762233] ep= 891  steps=1000  reward=506.2
+[T= 763233] ep= 892  steps=1000  reward=589.2
+[T= 764233] ep= 893  steps=1000  reward=595.4
+  >>> Eval T=765000  avg_reward=893.8
+[T= 765233] ep= 894  steps=1000  reward=555.9
+[T= 766233] ep= 895  steps=1000  reward=576.6
+[T= 767233] ep= 896  steps=1000  reward=585.2
+[T= 768233] ep= 897  steps=1000  reward=438.8
+[T= 769233] ep= 898  steps=1000  reward=581.9
+  >>> Eval T=770000  avg_reward=750.2
+[T= 770233] ep= 899  steps=1000  reward=584.2
+[T= 771233] ep= 900  steps=1000  reward=557.2
+[T= 772233] ep= 901  steps=1000  reward=569.0
+[T= 773233] ep= 902  steps=1000  reward=568.5
+[T= 774233] ep= 903  steps=1000  reward=610.3
+  >>> Eval T=775000  avg_reward=917.0
+[T= 775233] ep= 904  steps=1000  reward=562.9
+[T= 776233] ep= 905  steps=1000  reward=553.1
+[T= 777233] ep= 906  steps=1000  reward=618.3
+[T= 778233] ep= 907  steps=1000  reward=606.9
+[T= 779233] ep= 908  steps=1000  reward=563.8
+  >>> Eval T=780000  avg_reward=918.9
+[T= 780233] ep= 909  steps=1000  reward=283.4
+[T= 781233] ep= 910  steps=1000  reward=592.2
+[T= 782233] ep= 911  steps=1000  reward=607.1
+[T= 783233] ep= 912  steps=1000  reward=559.9
+[T= 784233] ep= 913  steps=1000  reward=596.0
+  >>> Eval T=785000  avg_reward=866.6
+[T= 785233] ep= 914  steps=1000  reward=539.2
+[T= 786233] ep= 915  steps=1000  reward=524.3
+[T= 787233] ep= 916  steps=1000  reward=573.3
+[T= 788233] ep= 917  steps=1000  reward=580.1
+[T= 789233] ep= 918  steps=1000  reward=505.7
+  >>> Eval T=790000  avg_reward=893.1
+[T= 790233] ep= 919  steps=1000  reward=512.2
+[T= 791233] ep= 920  steps=1000  reward=537.9
+[T= 792233] ep= 921  steps=1000  reward=538.2
+[T= 793233] ep= 922  steps=1000  reward=537.3
+[T= 794233] ep= 923  steps=1000  reward=538.3
+  >>> Eval T=795000  avg_reward=902.9
+[T= 795233] ep= 924  steps=1000  reward=529.4
+[T= 796233] ep= 925  steps=1000  reward=507.2
+[T= 797233] ep= 926  steps=1000  reward=422.9
+[T= 798233] ep= 927  steps=1000  reward=534.0
+[T= 799233] ep= 928  steps=1000  reward=502.7
+  >>> Eval T=800000  avg_reward=578.3
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step800000.pt
+[T= 800233] ep= 929  steps=1000  reward=575.2
+[T= 801233] ep= 930  steps=1000  reward=480.5
+[T= 802233] ep= 931  steps=1000  reward=588.3
+[T= 803233] ep= 932  steps=1000  reward=575.9
+[T= 804233] ep= 933  steps=1000  reward=472.8
+  >>> Eval T=805000  avg_reward=920.5
+[T= 805233] ep= 934  steps=1000  reward=561.4
+[T= 806233] ep= 935  steps=1000  reward=603.0
+[T= 807233] ep= 936  steps=1000  reward=583.5
+[T= 808233] ep= 937  steps=1000  reward=580.7
+[T= 809233] ep= 938  steps=1000  reward=591.8
+  >>> Eval T=810000  avg_reward=845.2
+[T= 810233] ep= 939  steps=1000  reward=540.5
+[T= 811233] ep= 940  steps=1000  reward=559.8
+[T= 812233] ep= 941  steps=1000  reward=441.7
+[T= 813233] ep= 942  steps=1000  reward=493.6
+[T= 814233] ep= 943  steps=1000  reward=515.2
+  >>> Eval T=815000  avg_reward=862.3
+[T= 815233] ep= 944  steps=1000  reward=620.8
+[T= 816233] ep= 945  steps=1000  reward=609.8
+[T= 817233] ep= 946  steps=1000  reward=587.2
+[T= 818233] ep= 947  steps=1000  reward=598.5
+[T= 819233] ep= 948  steps=1000  reward=607.6
+  >>> Eval T=820000  avg_reward=897.5
+[T= 820233] ep= 949  steps=1000  reward=590.6
+[T= 821233] ep= 950  steps=1000  reward=554.5
+[T= 822233] ep= 951  steps=1000  reward=536.0
+[T= 823233] ep= 952  steps=1000  reward=583.1
+[T= 824233] ep= 953  steps=1000  reward=572.3
+  >>> Eval T=825000  avg_reward=879.0
+[T= 825233] ep= 954  steps=1000  reward=344.1
+[T= 826233] ep= 955  steps=1000  reward=600.6
+[T= 827233] ep= 956  steps=1000  reward=601.0
+[T= 828233] ep= 957  steps=1000  reward=571.1
+[T= 829233] ep= 958  steps=1000  reward=599.1
+  >>> Eval T=830000  avg_reward=846.8
+[T= 830233] ep= 959  steps=1000  reward=586.8
+[T= 831233] ep= 960  steps=1000  reward=528.1
+[T= 832233] ep= 961  steps=1000  reward=566.1
+[T= 833233] ep= 962  steps=1000  reward=570.6
+[T= 834233] ep= 963  steps=1000  reward=414.4
+  >>> Eval T=835000  avg_reward=862.3
+[T= 835233] ep= 964  steps=1000  reward=558.9
+[T= 836233] ep= 965  steps=1000  reward=532.5
+[T= 837233] ep= 966  steps=1000  reward=564.0
+[T= 838233] ep= 967  steps=1000  reward=613.2
+[T= 839233] ep= 968  steps=1000  reward=580.5
+  >>> Eval T=840000  avg_reward=814.4
+[T= 840233] ep= 969  steps=1000  reward=557.0
+[T= 841233] ep= 970  steps=1000  reward=587.3
+[T= 842233] ep= 971  steps=1000  reward=547.8
+[T= 843233] ep= 972  steps=1000  reward=589.0
+[T= 844233] ep= 973  steps=1000  reward=444.3
+  >>> Eval T=845000  avg_reward=896.7
+[T= 845233] ep= 974  steps=1000  reward=562.5
+[T= 846233] ep= 975  steps=1000  reward=246.7
+[T= 847233] ep= 976  steps=1000  reward=566.7
+[T= 848233] ep= 977  steps=1000  reward=602.3
+[T= 849233] ep= 978  steps=1000  reward=545.3
+  >>> Eval T=850000  avg_reward=851.8
+[T= 850233] ep= 979  steps=1000  reward=542.4
+[T= 851233] ep= 980  steps=1000  reward=537.7
+[T= 852233] ep= 981  steps=1000  reward=613.9
+[T= 853233] ep= 982  steps=1000  reward=576.4
+[T= 854233] ep= 983  steps=1000  reward=534.5
+  >>> Eval T=855000  avg_reward=861.5
+[T= 855233] ep= 984  steps=1000  reward=529.0
+[T= 856233] ep= 985  steps=1000  reward=591.2
+[T= 857233] ep= 986  steps=1000  reward=571.9
+[T= 858233] ep= 987  steps=1000  reward=608.3
+[T= 859233] ep= 988  steps=1000  reward=596.2
+  >>> Eval T=860000  avg_reward=907.7
+[T= 860233] ep= 989  steps=1000  reward=622.1
+[T= 861233] ep= 990  steps=1000  reward=589.7
+[T= 862233] ep= 991  steps=1000  reward=608.1
+[T= 863233] ep= 992  steps=1000  reward=542.2
+[T= 864233] ep= 993  steps=1000  reward=575.2
+  >>> Eval T=865000  avg_reward=913.3
+[T= 865233] ep= 994  steps=1000  reward=559.0
+[T= 866233] ep= 995  steps=1000  reward=597.4
+[T= 867233] ep= 996  steps=1000  reward=549.3
+[T= 868233] ep= 997  steps=1000  reward=640.8
+[T= 869233] ep= 998  steps=1000  reward=624.7
+  >>> Eval T=870000  avg_reward=884.9
+[T= 870233] ep= 999  steps=1000  reward=541.8
+[T= 870260] ep=1000  steps=  27  reward=-42.2
+[T= 871260] ep=1001  steps=1000  reward=621.6
+[T= 872260] ep=1002  steps=1000  reward=618.7
+[T= 873260] ep=1003  steps=1000  reward=558.2
+[T= 874260] ep=1004  steps=1000  reward=568.8
+  >>> Eval T=875000  avg_reward=903.9
+[T= 875260] ep=1005  steps=1000  reward=622.9
+[T= 876260] ep=1006  steps=1000  reward=572.5
+[T= 877260] ep=1007  steps=1000  reward=572.8
+[T= 878260] ep=1008  steps=1000  reward=578.3
+[T= 879260] ep=1009  steps=1000  reward=615.9
+  >>> Eval T=880000  avg_reward=920.6
+[T= 880260] ep=1010  steps=1000  reward=636.3
+[T= 881260] ep=1011  steps=1000  reward=599.4
+[T= 882260] ep=1012  steps=1000  reward=624.6
+[T= 883260] ep=1013  steps=1000  reward=487.3
+[T= 884260] ep=1014  steps=1000  reward=619.9
+  >>> Eval T=885000  avg_reward=886.6
+[T= 885260] ep=1015  steps=1000  reward=605.5
+[T= 886260] ep=1016  steps=1000  reward=622.4
+[T= 887260] ep=1017  steps=1000  reward=618.3
+[T= 888260] ep=1018  steps=1000  reward=624.0
+[T= 889260] ep=1019  steps=1000  reward=621.9
+  >>> Eval T=890000  avg_reward=897.8
+[T= 890260] ep=1020  steps=1000  reward=641.1
+[T= 891260] ep=1021  steps=1000  reward=572.7
+[T= 892260] ep=1022  steps=1000  reward=622.8
+[T= 893260] ep=1023  steps=1000  reward=651.5
+[T= 894260] ep=1024  steps=1000  reward=625.8
+  >>> Eval T=895000  avg_reward=904.4
+[T= 895260] ep=1025  steps=1000  reward=601.7
+[T= 896260] ep=1026  steps=1000  reward=621.9
+[T= 897260] ep=1027  steps=1000  reward=623.3
+[T= 898260] ep=1028  steps=1000  reward=493.6
+[T= 899260] ep=1029  steps=1000  reward=570.5
+  >>> Eval T=900000  avg_reward=886.6
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step900000.pt
+[T= 900260] ep=1030  steps=1000  reward=619.8
+[T= 901260] ep=1031  steps=1000  reward=471.7
+[T= 902260] ep=1032  steps=1000  reward=536.8
+[T= 903260] ep=1033  steps=1000  reward=620.5
+[T= 904260] ep=1034  steps=1000  reward=636.0
+  >>> Eval T=905000  avg_reward=906.8
+[T= 905260] ep=1035  steps=1000  reward=589.7
+[T= 906260] ep=1036  steps=1000  reward=539.6
+[T= 907260] ep=1037  steps=1000  reward=-2127.6
+[T= 908260] ep=1038  steps=1000  reward=634.9
+[T= 909260] ep=1039  steps=1000  reward=617.7
+  >>> Eval T=910000  avg_reward=925.7
+[T= 910260] ep=1040  steps=1000  reward=623.4
+[T= 911260] ep=1041  steps=1000  reward=597.4
+[T= 912260] ep=1042  steps=1000  reward=622.8
+[T= 913260] ep=1043  steps=1000  reward=630.5
+[T= 914260] ep=1044  steps=1000  reward=619.1
+  >>> Eval T=915000  avg_reward=912.0
+[T= 915260] ep=1045  steps=1000  reward=609.9
+[T= 916260] ep=1046  steps=1000  reward=631.7
+[T= 917260] ep=1047  steps=1000  reward=645.5
+[T= 918260] ep=1048  steps=1000  reward=619.5
+[T= 919260] ep=1049  steps=1000  reward=648.8
+  >>> Eval T=920000  avg_reward=899.1
+[T= 920260] ep=1050  steps=1000  reward=654.2
+[T= 921260] ep=1051  steps=1000  reward=635.3
+[T= 922260] ep=1052  steps=1000  reward=526.1
+[T= 923260] ep=1053  steps=1000  reward=645.5
+[T= 924260] ep=1054  steps=1000  reward=634.9
+  >>> Eval T=925000  avg_reward=894.2
+[T= 925260] ep=1055  steps=1000  reward=620.7
+[T= 926260] ep=1056  steps=1000  reward=636.3
+[T= 927260] ep=1057  steps=1000  reward=643.0
+[T= 928260] ep=1058  steps=1000  reward=665.6
+[T= 929260] ep=1059  steps=1000  reward=636.3
+  >>> Eval T=930000  avg_reward=876.3
+[T= 930260] ep=1060  steps=1000  reward=630.4
+[T= 931260] ep=1061  steps=1000  reward=638.8
+[T= 932260] ep=1062  steps=1000  reward=607.1
+[T= 933260] ep=1063  steps=1000  reward=633.5
+[T= 934260] ep=1064  steps=1000  reward=593.5
+  >>> Eval T=935000  avg_reward=884.8
+[T= 935260] ep=1065  steps=1000  reward=613.8
+[T= 936260] ep=1066  steps=1000  reward=594.8
+[T= 937260] ep=1067  steps=1000  reward=555.1
+[T= 938260] ep=1068  steps=1000  reward=620.9
+[T= 939260] ep=1069  steps=1000  reward=643.9
+  >>> Eval T=940000  avg_reward=875.4
+[T= 940260] ep=1070  steps=1000  reward=638.3
+[T= 941260] ep=1071  steps=1000  reward=632.2
+[T= 942260] ep=1072  steps=1000  reward=638.7
+[T= 943260] ep=1073  steps=1000  reward=636.8
+[T= 944260] ep=1074  steps=1000  reward=625.2
+  >>> Eval T=945000  avg_reward=698.5
+[T= 945260] ep=1075  steps=1000  reward=651.3
+[T= 946260] ep=1076  steps=1000  reward=652.3
+[T= 947260] ep=1077  steps=1000  reward=611.3
+[T= 948260] ep=1078  steps=1000  reward=616.9
+[T= 949260] ep=1079  steps=1000  reward=598.3
+  >>> Eval T=950000  avg_reward=885.8
+[T= 950260] ep=1080  steps=1000  reward=609.7
+[T= 951260] ep=1081  steps=1000  reward=598.8
+[T= 952260] ep=1082  steps=1000  reward=579.5
+[T= 953260] ep=1083  steps=1000  reward=626.5
+[T= 954260] ep=1084  steps=1000  reward=579.5
+  >>> Eval T=955000  avg_reward=861.2
+[T= 955260] ep=1085  steps=1000  reward=609.4
+[T= 956260] ep=1086  steps=1000  reward=608.3
+[T= 957260] ep=1087  steps=1000  reward=649.8
+[T= 958260] ep=1088  steps=1000  reward=639.1
+[T= 959260] ep=1089  steps=1000  reward=621.2
+  >>> Eval T=960000  avg_reward=879.4
+[T= 960260] ep=1090  steps=1000  reward=641.9
+[T= 961260] ep=1091  steps=1000  reward=646.2
+[T= 962260] ep=1092  steps=1000  reward=637.7
+[T= 963260] ep=1093  steps=1000  reward=612.4
+[T= 964260] ep=1094  steps=1000  reward=639.4
+  >>> Eval T=965000  avg_reward=895.9
+[T= 965260] ep=1095  steps=1000  reward=627.1
+[T= 966260] ep=1096  steps=1000  reward=616.7
+[T= 967260] ep=1097  steps=1000  reward=611.7
+[T= 968260] ep=1098  steps=1000  reward=625.9
+[T= 969260] ep=1099  steps=1000  reward=583.9
+  >>> Eval T=970000  avg_reward=859.3
+[T= 970260] ep=1100  steps=1000  reward=609.4
+[T= 971260] ep=1101  steps=1000  reward=598.2
+[T= 972260] ep=1102  steps=1000  reward=627.7
+[T= 973260] ep=1103  steps=1000  reward=642.3
+[T= 974260] ep=1104  steps=1000  reward=643.7
+  >>> Eval T=975000  avg_reward=898.8
+[T= 975260] ep=1105  steps=1000  reward=658.4
+[T= 976260] ep=1106  steps=1000  reward=661.5
+[T= 977260] ep=1107  steps=1000  reward=655.0
+[T= 978260] ep=1108  steps=1000  reward=656.0
+[T= 979260] ep=1109  steps=1000  reward=654.6
+  >>> Eval T=980000  avg_reward=947.8
+[T= 980260] ep=1110  steps=1000  reward=660.4
+[T= 981260] ep=1111  steps=1000  reward=670.0
+[T= 982260] ep=1112  steps=1000  reward=660.5
+[T= 983260] ep=1113  steps=1000  reward=678.8
+[T= 984260] ep=1114  steps=1000  reward=658.8
+  >>> Eval T=985000  avg_reward=925.0
+[T= 985260] ep=1115  steps=1000  reward=654.2
+[T= 986260] ep=1116  steps=1000  reward=671.1
+[T= 987260] ep=1117  steps=1000  reward=659.7
+[T= 988260] ep=1118  steps=1000  reward=660.6
+[T= 989260] ep=1119  steps=1000  reward=664.2
+  >>> Eval T=990000  avg_reward=940.9
+[T= 990260] ep=1120  steps=1000  reward=647.9
+[T= 991260] ep=1121  steps=1000  reward=656.3
+[T= 992260] ep=1122  steps=1000  reward=661.7
+[T= 993260] ep=1123  steps=1000  reward=650.8
+[T= 994260] ep=1124  steps=1000  reward=655.1
+  >>> Eval T=995000  avg_reward=919.6
+[T= 995260] ep=1125  steps=1000  reward=662.0
+[T= 996260] ep=1126  steps=1000  reward=661.0
+[T= 997260] ep=1127  steps=1000  reward=651.3
+[T= 998260] ep=1128  steps=1000  reward=661.2
+[T= 999260] ep=1129  steps=1000  reward=665.6
+  >>> Eval T=1000000  avg_reward=907.7
+  >>> Checkpoint saved: output/02train_td3/td3_ant_step1000000.pt
+Training complete.

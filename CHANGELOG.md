@@ -7,6 +7,20 @@
 
 ---
 
+## [2026-06-21]
+
+### 新增
+- `03train_td3.py`：以 Stable-Baselines3 TD3 + `tools/gait_wrapper.py`(`RealisticGaitWrapper`)訓練步態導向的 Ant-v5,獎勵四足交替著地(trot)、限制速度上限、強懲罰大幅動作,取代預設 reward 訓出的「慣性甩動」高速移動,規格見 `markdown/03_train_td3_spec.md`
+- `01test_td3.py`:對應 `01train_td3.py` baseline 模型的推論腳本
+- `markdown/ant_v5_attractor_fix.md`:記錄 `02train_td3.py` reward shaping 的除錯過程 —— Ant-v5 預設 `healthy_reward=1.0` 讓「站著不動」變成零風險 attractor,5 次實驗驗證後改用拿掉 healthy_reward + 提高 contact_cost_weight + 還原 forward_reward_weight 解決
+- `.gitignore`:排除 `.DS_Store`、`__pycache__/`、`output/**/videos/`(評估錄影檔案過大,不納入版控)
+
+### 變更
+- `02train_td3.py`:依 `markdown/ant_v5_attractor_fix.md` 調整 reward shaping —— `FORWARD_REWARD_WEIGHT` 還原為 1.0、`HEALTHY_REWARD` 降為 0.1、`CONTACT_COST_WEIGHT` 提高 10 倍至 5e-3;邊界懲罰改為 `SOFT_RADIUS`(漸增懲罰)+ `MAX_RADIUS`(強制截斷)兩段式;出界視為 terminal 存入 replay buffer,讓 critic 學到「出界=沒有未來」
+- `02test_td3.py`:預設 checkpoint 路徑修正為 `output/02train_td3/`(原本指向已不存在的 `output/td3_ant_v5/`)
+
+---
+
 ## [2026-06-19 17:20]
 
 ### 變更

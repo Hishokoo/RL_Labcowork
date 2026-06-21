@@ -6,7 +6,7 @@ from tools.td3_agent import TD3Agent
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint", type=str,
-                    default="output/td3_ant_v5/td3_ant_step1000000.pt",
+                    default="output/02train_td3/td3_ant_step1000000.pt",
                     help="載入的模型路徑")
 parser.add_argument("--episodes", type=int, default=5, help="跑幾個 episode")
 args = parser.parse_args()

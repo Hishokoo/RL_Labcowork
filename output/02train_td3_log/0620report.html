@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>02train_td3 Reward Shaping 除錯記錄</title>
+<style>
+  body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; max-width: 980px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #222; }
+  h1 { border-bottom: 3px solid #333; padding-bottom: 8px; }
+  h2 { margin-top: 48px; border-left: 6px solid #4a7; padding-left: 12px; }
+  h3 { margin-top: 28px; color: #333; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+  th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+  th { background: #f0f0f0; }
+  code, pre { background: #f5f5f5; border-radius: 4px; }
+  pre { padding: 12px; overflow-x: auto; font-size: 13px; }
+  code { padding: 2px 5px; }
+  .tag-ok { color: #176f17; font-weight: bold; }
+  .tag-bad { color: #b00020; font-weight: bold; }
+  .tag-warn { color: #b06000; font-weight: bold; }
+  .box { background: #fafafa; border: 1px solid #ddd; border-radius: 6px; padding: 14px 18px; margin: 16px 0; }
+  .conclusion { background: #eef7ee; border-left: 4px solid #4a7; }
+  .problem { background: #fdeeee; border-left: 4px solid #c33; }
+  .timeline-item { border-left: 3px solid #aaa; margin-left: 8px; padding-left: 18px; margin-bottom: 28px; position: relative; }
+  .timeline-item::before { content: ""; position: absolute; left: -8px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #888; }
+  .timeline-item.ok::before { background: #4a7; }
+  .timeline-item.bad::before { background: #c33; }
+  .timeline-item.warn::before { background: #d90; }
+  .small { color: #666; font-size: 13px; }
+  nav { background: #f7f7f7; border: 1px solid #ddd; padding: 14px 20px; border-radius: 6px; }
+  nav a { display: inline-block; margin-right: 14px; }
+</style>
+</head>
+<body>
+
+<h1>02train_td3.py Reward Shaping 除錯記錄</h1>
+<p class="small">記錄日期：2026-06-20　目的：解決 Ant-v5 TD3 訓練「衝出邊界」與「走路太快」的問題</p>
+
+<nav>
+<strong>目錄：</strong>
+<a href="#background">問題背景</a>
+<a href="#round1">第一輪修改</a>
+<a href="#bug">使用者質疑與反思</a>
+<a href="#round2">第二輪：靜止懲罰實驗</a>
+<a href="#round3">第三輪：簡化 reward</a>
+<a href="#conclusion">目前結論</a>
+<a href="#code">目前程式碼狀態</a>
+<a href="#next">下一步選項</a>
+</nav>
+
+<h2 id="background">問題背景</h2>
+<div class="box">
+<p>使用者打開 <code>02test_td3.py</code> 模擬器，發現用 <code>output/02train_td3</code> 訓練出來的模型：</p>
+<ol>
+  <li>會跑出邊界（地圖外）</li>
+  <li>走路速度太快，懷疑這導致牠用蠻力衝刺而不是用重心轉移、抬腳的自然步態行走</li>
+</ol>
+<p>原始 <code>02train_td3.py</code>（修改前）已經有邊界懲罰跟動作正則化，但效果不夠。</p>
+</div>
+
+<h3>原始程式碼問題診斷</h3>
+<table>
+<tr><th>問題</th><th>說明</th></tr>
+<tr>
+  <td><strong>Bootstrap bug</strong></td>
+  <td>邊界截斷時只設 <code>truncated=True</code>，存進 replay buffer 的 terminal flag 只用環境原生的 <code>terminated</code>。
+  代表 critic 在算 TD target 時，仍認為「衝出邊界」這個狀態後面還有正常的未來價值可以 bootstrap，邊界懲罰訊號被沖淡。</td>
+</tr>
+<tr>
+  <td><strong>懲罰太晚太小</strong></td>
+  <td><code>MAX_RADIUS=8.0</code> 給的空間大，懲罰只在超出後才出現（係數僅 1.0），相對 Ant-v5 整個 episode 累積的 forward_reward，這懲罰量級太小、且沒有漸進梯度讓牠提早轉向。</td>
+</tr>
+<tr>
+  <td><strong>沒有直接的速度控制</strong></td>
+  <td>原本只懲罰動作幅度跟抖動，沒有針對「速度」本身。Ant-v5 預設 <code>forward_reward_weight=1.0</code>，本質上鼓勵用最大 x 方向速度衝刺。</td>
+</tr>
+</table>
+
+<h2 id="round1">第一輪修改：邊界修正 + 速度區間懲罰</h2>
+
+<div class="timeline-item ok">
+<h3>修改內容</h3>
+<ul>
+  <li>邊界出界同時標記為 terminal（修正 bootstrap bug）：<code>replay_buffer.add(..., float(terminated or boundary_violation))</code></li>
+  <li>加入 <code>SOFT_RADIUS=6.0</code> 漸進式邊界懲罰，<code>MAX_RADIUS=8.0</code> 才強制截斷</li>
+  <li><code>BOUNDARY_PENALTY</code> 從 1.0 加大到 5.0</li>
+  <li>用 Ant-v5 原生參數 <code>forward_reward_weight</code> 從 1.0 降到 0.5（後調整為 0.6）</li>
+  <li>加入速度區間懲罰：<code>MIN_SPEED=0.5</code>、<code>TARGET_SPEED=1.5</code>，低於下限或高於上限都扣分</li>
+  <li><code>ACTION_PENALTY_WEIGHT</code> 從 0.5 降到 0.15（避免跟 Ant-v5 內建 <code>ctrl_cost_weight=0.5</code> 重複扣分）</li>
+</ul>
+</div>
+
+<div class="timeline-item warn">
+<h3>事前驗證：用舊模型動作分布做 reward 地形模擬</h3>
+<p>用已訓練好、會走但太快的舊模型（<code>output/01train_td3</code>）的動作，依比例縮放後餵進新 reward function，驗證「走路 reward 是否比站著高」：</p>
+<table>
+<tr><th>動作縮放</th><th>平均速度 vx</th><th>平均每步 reward（排除邊界污染）</th></tr>
+<tr><td>站著不動</td><td>0.00</td><td>0.867</td></tr>
+<tr><td>0.1</td><td>0.43</td><td>1.152</td></tr>
+<tr><td>0.15</td><td>0.54</td><td>1.218</td></tr>
+<tr><td>0.2</td><td>0.76</td><td>1.351</td></tr>
+<tr><td><strong>0.3</strong></td><td><strong>1.13</strong></td><td><strong>1.505（峰值）</strong></td></tr>
+<tr><td>0.5（超速）</td><td>2.64</td><td>1.038</td></tr>
+</table>
+<p class="small">結論（事後證明不完整）：reward 地形呈山丘狀，走路在 0.5~1.5 m/s 區間內明顯優於站立，<strong>地形設計本身是對的</strong>。</p>
+</div>
+
+<div class="timeline-item bad">
+<h3>正式訓練結果（1,000,000 steps，約 55 分鐘）</h3>
+<p>訓練過程指標看起來很好：episode 穩定跑滿 1000 步、reward 持續上升、最終 eval avg_reward = <strong>907.7</strong>。</p>
+<p><strong>但實際用 02test_td3.py 風格腳本量化驗證 5 個 episode：</strong></p>
+<table>
+<tr><th>Episode</th><th>steps</th><th>reward</th><th>max_dist（離原點最大距離）</th><th>avg_vx</th><th>max_vx</th></tr>
+<tr><td>0</td><td>1000</td><td>929.0</td><td>0.89</td><td>0.02</td><td>1.43</td></tr>
+<tr><td>1</td><td>1000</td><td>945.9</td><td>0.62</td><td>0.01</td><td>1.38</td></tr>
+<tr><td>2</td><td>1000</td><td>917.2</td><td>0.19</td><td>0.00</td><td>0.44</td></tr>
+<tr><td>3</td><td>1000</td><td>907.2</td><td>0.67</td><td>0.01</td><td>0.91</td></tr>
+<tr><td>4</td><td>1000</td><td>910.1</td><td>0.53</td><td>0.01</td><td>1.34</td></tr>
+</table>
+<p class="tag-bad">邊界問題完全解決（max_dist 都 &lt; 1m），但 agent 幾乎完全沒有移動 —— 平均速度趨近於 0，整個 50 秒 episode 幾乎都待在原地。這是「站著不動」的退化解。</p>
+</div>
+
+<h2 id="bug">使用者質疑與反思</h2>
+<div class="box problem">
+<p><strong>使用者：</strong>「我剛剛不是有請你模擬計算會不會站著不動嗎」</p>
+<p><strong>反思：</strong>事前的 reward 地形模擬只驗證了「reward function 設計方向對不對」（用既有會走的策略去算分數），<strong>並沒有模擬「一個從零開始、權重隨機初始化的 TD3 agent，實際訓練時會不會自己找到這個會走路的解」</strong>。這是兩個完全不同的問題：</p>
+<ol>
+  <li>reward 地形對不對（驗證過，是對的）</li>
+  <li>訓練過程能不能找到地形上的最優點（探索/收斂問題，沒辦法只靠靜態模擬預測）</li>
+</ol>
+<p>實際訓練時，agent 一開始就發現「幾乎不動」可以穩穩拿到 healthy_reward，這是一個很容易達到、風險很低的局部解，比起冒險走到 reward 更高的「走動區」（會經歷不熟練、容易摔倒的過渡期）更有吸引力。</p>
+</div>
+
+<h2 id="round2">第二輪：嘗試加重「站著不動」的懲罰</h2>
+
+<div class="timeline-item bad">
+<h3>實驗 A：weight=3.0，從零訓練，100k steps</h3>
+<p>把 <code>STILLNESS_PENALTY_WEIGHT</code> 從 0.5 加到 3.0（讓站著不動的 reward 從 0.867 降到理論值 0.218，遠低於走動的 0.99）。</p>
+<table>
+<tr><th>對照</th><th>T=100,000 時 episode 狀態</th></tr>
+<tr><td>weight=0.5（第一輪結果）</td><td>穩定跑滿 1000 步，reward 530~580</td></tr>
+<tr><td><strong>weight=3.0</strong></td><td><span class="tag-bad">episode 縮短到 7~65 步，reward 持續負值（-15~-120），agent 頻繁摔倒</span></td></tr>
+</table>
+<p>逼牠不能站著不動，但牠還沒學會邊走邊平衡。</p>
+</div>
+
+<div class="timeline-item bad">
+<h3>實驗 B：weight=1.5，從零訓練，延長到 300k steps</h3>
+<table>
+<tr><th>T=50,000</th><th>T=100,000</th><th>T=150,000~300,000</th></tr>
+<tr><td>短暫穩定，episode 跑滿 1000 步，reward 轉正（108~136），但 vx 仍很低（0.04~0.06）</td><td>又變得不穩定，episode 縮回 8~230 步，reward 轉負</td><td><span class="tag-bad">完全卡住，episode 長度死死卡在 7~9 步，整整 15 萬步沒有任何改善</span></td></tr>
+</table>
+<p class="tag-bad">結論：weight=1.5 在 300k steps 內沒有收斂的跡象，agent 學會的是「猛衝一下拿到還不錯的速度，然後立刻摔倒重來」，而不是真正穩定走路。</p>
+</div>
+
+<div class="timeline-item bad">
+<h3>實驗 C：weight=1.5，從舊的「會走但太快」模型微調（fine-tune），100k steps</h3>
+<p>嘗試用 <code>output/01train_td3</code> 的已訓練模型（知道怎麼協調腳走，但不知道要減速/守邊界）作初始化，而非從零訓練，理論上應該更快收斂。</p>
+<p class="tag-bad">結果：從頭到尾都不穩定，到 T=100,000 時 episode 仍只有 7~9 步，幾乎每次都摔。新的 reward 分佈跟舊模型訓練時差太多，等於要它「一邊忘記舊習慣一邊學新規則」，反而比從零訓練更不穩。</p>
+</div>
+
+<h2 id="round3">第三輪：簡化 reward，只留邊界 + forward_reward_weight</h2>
+<div class="box">
+<p>判斷問題不在 stillness 權重該調多少，而是同時疊加太多懲罰項（邊界 + 速度上限 + 速度下限 + 動作幅度 + 動作差異，還沒算 Ant-v5 內建的 forward/healthy/ctrl/contact）讓 reward 地形太複雜。改為：</p>
+<ul>
+  <li>移除 <code>MIN_SPEED</code> / <code>TARGET_SPEED</code> / <code>SPEED_PENALTY_WEIGHT</code> / <code>STILLNESS_PENALTY_WEIGHT</code> 整組速度懲罰</li>
+  <li><code>ACTION_PENALTY_WEIGHT</code> 還原回原始的 0.5</li>
+  <li>保留：邊界 bootstrap bug 修正、<code>SOFT_RADIUS</code>/<code>MAX_RADIUS</code>/<code>BOUNDARY_PENALTY</code>、<code>ACTION_DIFF_PENALTY_WEIGHT</code></li>
+  <li>只靠調整 <code>FORWARD_REWARD_WEIGHT</code> 來抑制衝刺速度</li>
+</ul>
+</div>
+
+<div class="timeline-item warn">
+<h3>實驗 D：FORWARD_REWARD_WEIGHT=0.6，簡化版，150k steps</h3>
+<table>
+<tr><th>指標</th><th>結果</th></tr>
+<tr><td>Episode 長度</td><td class="tag-ok">穩定跑滿 1000 步</td></tr>
+<tr><td>Reward</td><td class="tag-ok">穩定 830~870</td></tr>
+<tr><td>max_dist</td><td class="tag-ok">2.5~5m（在 SOFT_RADIUS=6 安全範圍內）</td></tr>
+<tr><td>avg_vx</td><td class="tag-bad">0.03~0.09（幾乎沒有真的往前走）</td></tr>
+</table>
+<p>跟有 stillness 懲罰時的結果幾乎一樣 —— 證明「站著不動」這個解跟 stillness 懲罰強弱沒關係，是 <code>forward_reward_weight=0.6</code> 本身對 TD3 來說太弱，不足以對抗「站著領 healthy_reward」的誘惑。</p>
+</div>
+
+<div class="timeline-item bad">
+<h3>實驗 E：FORWARD_REWARD_WEIGHT=0.8，簡化版，150k steps</h3>
+<table>
+<tr><th>時間點</th><th>avg_vx 範圍</th><th>max_dist 範圍</th></tr>
+<tr><td>T~50,000</td><td>0.06~0.15</td><td>3~8m（偶爾觸及邊界，邊界機制正確運作，episode 在 dist=8.00 準確截斷）</td></tr>
+<tr><td>T~100,000</td><td>0.04~0.07</td><td>3~4.5m</td></tr>
+<tr><td>T~150,000</td><td class="tag-bad">0.02~0.05（持續下降）</td><td class="tag-bad">1~3m（持續縮小）</td></tr>
+</table>
+<p class="tag-bad">結論：weight=0.8 一樣收斂到「站著不動」，只是收斂得比 0.6 慢——軌跡是越訓練越往原地縮，不是越訓練越會走。</p>
+</div>
+
+<h2 id="conclusion">目前結論</h2>
+<div class="box conclusion">
+<p><strong>6 次實驗一致指向同一個結論：</strong></p>
+<table>
+<tr><th>#</th><th>設定</th><th>結果</th></tr>
+<tr><td>1</td><td>weight=0.5/0.6 + 弱 stillness(0.5) + 速度區間懲罰</td><td>穩定但幾乎不走（vx≈0.00~0.02）</td></tr>
+<tr><td>2</td><td>weight=0.6 + 強 stillness(1.5/3.0)，從零訓練</td><td>不穩定，反覆摔倒，不收斂</td></tr>
+<tr><td>3</td><td>weight=0.6 + 強 stillness(1.5)，從舊模型微調</td><td>更不穩定，摧毀原有技能</td></tr>
+<tr><td>4</td><td>weight=0.6，無速度懲罰（簡化版）</td><td>穩定但幾乎不走（vx≈0.03~0.09）</td></tr>
+<tr><td>5</td><td>weight=0.8，無速度懲罰（簡化版）</td><td>穩定但持續退化到不走（vx 持續下降）</td></tr>
+</table>
+<p><strong>在 forward_reward_weight 0.5~0.8 這個範圍內，不管要不要加 stillness 懲罰、懲罰強或弱，vanilla TD3 + Ant-v5 都會被吸進「站著領 healthy_reward」這個局部最優解。這不是單純調參數能解決的問題，是 reward 結構本身的吸引盆地（attractor basin）問題。</strong></p>
+<p>唯一確定有效、且在所有實驗中都穩健運作的部分：<strong>邊界懲罰機制（SOFT_RADIUS 漸進懲罰 + MAX_RADIUS 強制截斷 + bootstrap bug 修正）</strong>。在所有 6 次實驗中，agent 從未真正衝出邊界，距離都被控制在安全範圍內，且在 weight=0.8 的實驗中可以看到 episode 精準在 dist=8.00 截斷，證明機制運作正常。</p>
+</div>
+
+<h2 id="code">目前程式碼狀態（02train_td3.py）</h2>
+<pre>FORWARD_REWARD_WEIGHT = 0.8     # Ant-v5 原生前進獎勵權重（預設 1.0；0.6 太弱會讓 agent 學成幾乎不走）
+SOFT_RADIUS           = 6.0     # 超過此距離開始給漸增邊界懲罰
+MAX_RADIUS            = 8.0     # 離原點距離超過此值強制截斷 episode
+BOUNDARY_PENALTY      = 5.0     # 邊界懲罰係數
+ACTION_PENALTY_WEIGHT = 0.5     # 動作幅度懲罰係數（已還原為原始值）
+ACTION_DIFF_PENALTY_WEIGHT = 0.1  # 相鄰動作差異懲罰係數
+
+...
+# 邊界位置懲罰：超過 SOFT_RADIUS 後漸增懲罰，超過 MAX_RADIUS 強制截斷
+dist = info["distance_from_origin"]
+if dist > SOFT_RADIUS:
+    reward -= BOUNDARY_PENALTY * (dist - SOFT_RADIUS)
+boundary_violation = dist > MAX_RADIUS
+if boundary_violation:
+    truncated = True
+
+# 動作正則化
+reward -= ACTION_PENALTY_WEIGHT * np.sum(np.square(action))
+reward -= ACTION_DIFF_PENALTY_WEIGHT * np.sum(np.square(action - prev_action))
+
+# Store transition：出界視為 terminal，讓 critic 學到「出界=沒有未來」
+replay_buffer.add(obs, action, next_obs, reward, float(terminated or boundary_violation))</pre>
+<p class="small">注意：<code>output/02train_td3/</code> 目前的 checkpoint 仍是「實驗 1」（weight=0.6 + 弱 stillness）跑完整 1M steps 的結果，尚未用上面這組設定重新跑過完整訓練。所有 0.8 / 1.5 / 3.0 的實驗都只在 <code>/tmp/validate_stillness/</code> 做短時間驗證，沒有覆蓋正式輸出目錄。</p>
+
+<h2 id="next">下一步選項</h2>
+<div class="box">
+<table>
+<tr><th>選項</th><th>說明</th><th>預期效果</th></tr>
+<tr>
+  <td><strong>A. Curriculum（建議）</strong></td>
+  <td>訓練前期 <code>forward_reward_weight</code> 設高（如 1.0，先學會走路這個技能），訓練後期逐漸降低（如降到 0.6），讓 agent「先學會走、再學會放慢」，而非一開始就同時面對矛盾目標。需修改 training loop 加入隨 timestep 變化的權重。</td>
+  <td>最有機會同時解決「會走」+「不要太快」，但需要再開發 + 驗證一輪</td>
+</tr>
+<tr>
+  <td>B. 接受 weight=0.8 的結果</td>
+  <td>不出界但幾乎不走，直接跑完整 1M steps。</td>
+  <td>解決邊界問題，但走路目標沒達成</td>
+</tr>
+<tr>
+  <td>C. 還原 forward_reward_weight=1.0</td>
+  <td>只靠已修正的邊界機制擋住出界，不刻意壓低速度。</td>
+  <td>大概會走得跟原來一樣快，但理論上不會出界</td>
+</tr>
+</table>
+</div>
+
+</body>
+</html>
