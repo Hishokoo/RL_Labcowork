@@ -1,6 +1,8 @@
 import gymnasium as gym
 import numpy as np
 
+from tools import gait_metrics
+
 # Ant-v5 的四隻腳在這個 MuJoCo 模型裡沒有命名（body name 是空字串），
 # 用 print(model.body(i).name for i in range(model.nbody)) 配合 geom bodyid 反查得到的對應關係：
 #   body 4  (left_ankle_geom)   = front_left  (FL)
@@ -17,6 +19,21 @@ class RealisticGaitWrapper(gym.Wrapper):
     - 強懲罰大幅動作（鼓勵省力）
     - 獎勵四足交替著地（trot 步態）
     - 維持軀幹姿態穩定
+
+    gait_mode 控制步態 reward 的公式（向後相容，預設沿用 03）：
+    - "legacy"   ：03 的逐幀對角線同步。站著不動的 r_gait 反而偏高（靜態可作弊）。
+    - "antiphase"：以對角線「反相」為主導（見 gait_metrics.anti_phase），
+                   靜態姿勢拿不到分，逼出真正的交替踏步。04 起採用。
+
+    forward_mode 控制速度 reward（與「站著 attractor」直接相關）：
+    - "deviation"：03 的 -|x_vel - target|。站著時 = -1.0，等於一個 speed penalty——
+                   而 markdown/ant_v5_attractor_fix.md 實測這類懲罰會逼出「快速摔倒擺爛」。
+    - "progress" ：max(0, min(x_vel, target))。站著 = 0（不是負的）、達到目標才給正分，
+                   讓「走路」成為唯一的正收益來源，符合 02 已驗證的 healthy_reward=0 思路。04 起採用。
+
+    smooth_weight / tilt_weight 預設 0（不影響 03）：
+    - smooth_weight：懲罰相鄰動作差（jerk），抓「抽搐 / 慣性甩動」。
+    - tilt_weight  ：懲罰軀幹傾斜（直立度），補足只看高度 z 的姿態 reward。
     """
 
     def __init__(
@@ -28,6 +45,10 @@ class RealisticGaitWrapper(gym.Wrapper):
         posture_weight: float = 2.0,
         alive_weight: float = 1.0,
         contact_threshold: float = 1.0,
+        gait_mode: str = "legacy",
+        forward_mode: str = "deviation",
+        smooth_weight: float = 0.0,
+        tilt_weight: float = 0.0,
     ):
         super().__init__(env)
         self.target_speed = target_speed
@@ -36,11 +57,21 @@ class RealisticGaitWrapper(gym.Wrapper):
         self.posture_weight = posture_weight
         self.alive_weight = alive_weight
         self.contact_threshold = contact_threshold
+        if gait_mode not in ("legacy", "antiphase"):
+            raise ValueError(f"未知的 gait_mode：{gait_mode}（可用 'legacy' / 'antiphase'）")
+        if forward_mode not in ("deviation", "progress"):
+            raise ValueError(f"未知的 forward_mode：{forward_mode}（可用 'deviation' / 'progress'）")
+        self.gait_mode = gait_mode
+        self.forward_mode = forward_mode
+        self.smooth_weight = smooth_weight
+        self.tilt_weight = tilt_weight
         self.prev_contacts = np.zeros(4)
+        self.prev_action = np.zeros(env.action_space.shape[0], dtype=np.float64)
         self.foot_body_ids = FOOT_BODY_IDS
 
     def reset(self, **kwargs):
         self.prev_contacts = np.zeros(4)
+        self.prev_action = np.zeros(self.env.action_space.shape[0], dtype=np.float64)
         return self.env.reset(**kwargs)
 
     def step(self, action):
@@ -56,6 +87,7 @@ class RealisticGaitWrapper(gym.Wrapper):
         info["reward_components"] = components
         info["original_reward"] = _orig_reward
         self.prev_contacts = contacts
+        self.prev_action = np.asarray(action, dtype=np.float64)
 
         return obs, reward, terminated, truncated, info
 
@@ -66,9 +98,13 @@ class RealisticGaitWrapper(gym.Wrapper):
         return (contact_magnitudes > self.contact_threshold).astype(np.float32)
 
     def _compute_reward(self, action, info, is_healthy, contacts):
-        # 1. 速度向目標靠近（不是越快越好）
+        # 1. 速度 reward（不是越快越好；forward_mode 決定站著要不要被罰）
         x_vel = info.get("x_velocity", 0.0)
-        r_forward = -abs(x_vel - self.target_speed)
+        if self.forward_mode == "progress":
+            # 站著 = 0、達到 target 才滿分、超過 target 不再加分（速度上限仍在）
+            r_forward = max(0.0, min(x_vel, self.target_speed))
+        else:  # "deviation"：03 行為，偏離 target 即罰（站著 = -target_speed）
+            r_forward = -abs(x_vel - self.target_speed)
 
         # 2. 存活基本分（沿用原 env 的 healthy 判定）
         r_alive = self.alive_weight if is_healthy else 0.0
@@ -76,24 +112,46 @@ class RealisticGaitWrapper(gym.Wrapper):
         # 3. 控制懲罰（加重版）
         r_ctrl = -self.ctrl_weight * float(np.sum(np.square(action)))
 
-        # 4. 步態 reward（核心）：trot 對角線同步
-        diag1_sync = 1.0 - abs(contacts[0] - contacts[3])  # FL vs BR
-        diag2_sync = 1.0 - abs(contacts[1] - contacts[2])  # FR vs BL
-        cross_pattern = abs(contacts[0] - contacts[1])     # FL vs FR 應反相
-        r_gait = self.gait_weight * (0.4 * diag1_sync + 0.4 * diag2_sync + 0.2 * cross_pattern)
+        # 4. 步態 reward（核心）：trot 對角線交替
+        if self.gait_mode == "antiphase":
+            # 反相為主導（0.6）：兩條對角線「一抬一踏」才給分，靜態姿勢 = 0。
+            # 同步為輔（各 0.2）：維持同一對角線內兩腳協調，避免單腳亂跳。
+            intra1 = 1.0 - abs(contacts[0] - contacts[3])  # FL, BR 同相
+            intra2 = 1.0 - abs(contacts[1] - contacts[2])  # FR, BL 同相
+            anti = gait_metrics.anti_phase(contacts)
+            r_gait = self.gait_weight * (0.2 * intra1 + 0.2 * intra2 + 0.6 * anti)
+        else:  # "legacy"：沿用 03 的逐幀對角線同步公式
+            diag1_sync = 1.0 - abs(contacts[0] - contacts[3])  # FL vs BR
+            diag2_sync = 1.0 - abs(contacts[1] - contacts[2])  # FR vs BL
+            cross_pattern = abs(contacts[0] - contacts[1])     # FL vs FR 應反相
+            r_gait = self.gait_weight * (0.4 * diag1_sync + 0.4 * diag2_sync + 0.2 * cross_pattern)
 
         # 5. 姿態 reward（軀幹高度）
         torso_z = self.env.unwrapped.data.qpos[2]
         r_posture = -self.posture_weight * abs(torso_z - 0.6)
 
-        total = r_forward + r_alive + r_ctrl + r_gait + r_posture
+        # 6. 動作平滑懲罰（jerk）：相鄰動作差的平方和。weight=0 時為 0，不影響 legacy。
+        action_arr = np.asarray(action, dtype=np.float64)
+        jerk = float(np.sum(np.square(action_arr - self.prev_action)))
+        r_smooth = -self.smooth_weight * jerk
+
+        # 7. 軀幹直立懲罰：偏離垂直越多罰越重。weight=0 時為 0，不影響 legacy。
+        qpos = self.env.unwrapped.data.qpos
+        upright = gait_metrics.uprightness(qpos)
+        r_tilt = -self.tilt_weight * (1.0 - upright)
+
+        total = r_forward + r_alive + r_ctrl + r_gait + r_posture + r_smooth + r_tilt
         components = {
             "forward": r_forward,
             "alive": r_alive,
             "ctrl": r_ctrl,
             "gait": r_gait,
             "posture": r_posture,
+            "smooth": r_smooth,
+            "tilt": r_tilt,
             "x_velocity": x_vel,
             "torso_z": torso_z,
+            "uprightness": upright,
+            "anti_phase": gait_metrics.anti_phase(contacts),
         }
         return float(total), components

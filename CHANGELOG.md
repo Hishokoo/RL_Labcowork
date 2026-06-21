@@ -7,10 +7,21 @@
 
 ---
 
-## [2026-06-21]
+## [2026-06-21] — 04 步態品質指標優化（尚未訓練）
 
 ### 新增
 - `03test_td3.py`：對應 `03train_td3.py` 的推論/模擬腳本，載入 SB3 `TD3.load()` 模型並套用相同的 `RealisticGaitWrapper` 與環境參數，於 MuJoCo human 模式下視覺化步態，支援 `--checkpoint` 與 `--episodes` 參數
+- `tools/gait_metrics.py`：步態品質量化指標共用模組（`anti_phase`、`diagonal_sync`、`uprightness` per-step；`action_jerk`、`transport_cost`(CoT 代理)、`contact_regularity`(自相關週期性 0..1) per-episode），供 wrapper / 訓練 callback / 未來 eval 腳本共用，已用純 numpy 驗證數值
+- `04train_td3.py`：接續 03 的步態品質優化實驗。改用 `gait_mode="antiphase"`（步態 reward 以對角線反相為主導，修正 03 legacy 公式「站著 r_gait=1.6 反而高於走路」的隱性站著 attractor）、`forward_mode="progress"`（速度 reward 改 `max(0,min(x_vel,target))`，站著=0 而非 -1.0，符合 `ant_v5_attractor_fix.md` 結論）、新增 jerk 與軀幹直立懲罰；callback 擴充為每個 eval interval 跑 deterministic episode 算整段 scorecard 寫入 TensorBoard，並存中間 checkpoint（03 只有 final_model）。規格見 `markdown/04_train_td3_spec.md`
+- `markdown/04_train_td3_spec.md`：04 規格與 03 指標卡關的診斷（含「站著加分」bug 的驗證數據）
+
+### 變更
+- `tools/gait_wrapper.py`：`RealisticGaitWrapper` 新增 `gait_mode`、`forward_mode`、`smooth_weight`、`tilt_weight` 四個參數，並開始記錄 `smooth`/`tilt`/`uprightness`/`anti_phase` reward 分量。**全部預設值維持 03 行為**，03 可完全重現；僅 `04train_td3.py` 啟用新設定
+
+### 待辦
+- 與隊友對齊「站著扣分」機制的整合方式（該機制不在版控裡），再跑 1M 正式訓練
+
+### 新增（03，續）
 - `03train_td3.py`：以 Stable-Baselines3 TD3 + `tools/gait_wrapper.py`(`RealisticGaitWrapper`)訓練步態導向的 Ant-v5,獎勵四足交替著地(trot)、限制速度上限、強懲罰大幅動作,取代預設 reward 訓出的「慣性甩動」高速移動,規格見 `markdown/03_train_td3_spec.md`
 - `01test_td3.py`:對應 `01train_td3.py` baseline 模型的推論腳本
 - `markdown/ant_v5_attractor_fix.md`:記錄 `02train_td3.py` reward shaping 的除錯過程 —— Ant-v5 預設 `healthy_reward=1.0` 讓「站著不動」變成零風險 attractor,5 次實驗驗證後改用拿掉 healthy_reward + 提高 contact_cost_weight + 還原 forward_reward_weight 解決
