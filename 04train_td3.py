@@ -16,13 +16,15 @@
 # 04 站著 ≈ +0.8、走路 ≈ +1.7（走路明顯勝出，gap 由 -0.8 翻成 +0.9）。站著仍為正（非負），
 # 故不會觸發 ant_v5_attractor_fix.md 記載的「負向懲罰 → 快速摔倒擺爛」失敗模式。
 import os
+from functools import partial
+
 import gymnasium as gym
 import numpy as np
 from gymnasium.wrappers import RecordVideo
 from stable_baselines3 import TD3
 from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback
-from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 
 from tools.gait_wrapper import RealisticGaitWrapper
 from tools import gait_metrics
@@ -30,23 +32,36 @@ from tools import gait_metrics
 # ── Hyperparameters ───────────────────────────────────────────────────────────
 ENV_NAME        = "Ant-v5"
 SEED            = 0
-MAX_TIMESTEPS   = 1_000_000
+# 平行環境數：N_ENVS=1 為單環境（與 03 可公平比較）。多環境時下方會把 train_freq/gradient_steps
+# 設成維持 1:1 的梯度更新比例，總步數與更新數不變。
+# 註：實測 8 環境只比單環境快 ~13%（CPU 仍只用 ~1.2 核、GPU 14%）——瓶頸在 SB3 單執行緒的
+# 梯度更新/取樣迴圈，不在環境收集，加環境數幫助有限。故預設回 1。保留多環境路徑備用。
+N_ENVS          = int(os.environ.get("N_ENVS", 1))
+# 多數旋鈕可用環境變數覆寫，讓每個 reward 實驗只要換 env vars + OUTPUT_DIR，不必新增檔案。
+# 例（05 修站著 attractor，先跑 300k 短驗證、關錄影）：
+#   OUTPUT_DIR=output/05_gated GAIT_MODE=antiphase_gated FORWARD_WEIGHT=2 \
+#   MAX_TIMESTEPS=300000 VIDEO_INTERVAL=9999999 MUJOCO_GL=egl python 04train_td3.py
+MAX_TIMESTEPS   = int(os.environ.get("MAX_TIMESTEPS", 1_000_000))
 LEARNING_STARTS = 10_000
-EVAL_INTERVAL   = 50_000      # 中途錄影 + scorecard 間隔
-CHECKPOINT_FREQ = 100_000     # 中途存檔間隔（03 沒有，這次補上以便看指標演進）
-OUTPUT_DIR      = "output/04train_td3"
+EVAL_INTERVAL   = int(os.environ.get("EVAL_INTERVAL", 50_000))       # 數值 scorecard 間隔（便宜）
+VIDEO_INTERVAL  = int(os.environ.get("VIDEO_INTERVAL", 200_000))     # 錄影間隔（moviepy 編碼貴，與 scorecard 解耦以加速）
+CHECKPOINT_FREQ = int(os.environ.get("CHECKPOINT_FREQ", 100_000))    # 中途存檔間隔
+OUTPUT_DIR      = os.environ.get("OUTPUT_DIR", "output/04train_td3")
 
-# RealisticGaitWrapper 參數（相對 03 的調整見檔頭）
+# RealisticGaitWrapper 參數（reward 旋鈕可用 env var 覆寫以快速迭代）。
+# 經三次失敗（站著 / 原地踏步 / 摔死）後回到 ant_v5_attractor_fix.md 已驗證會走的配方：
+# forward 主導 + 溫和懲罰 + 小 alive 底分（防摔死）+ 「只有前進才吃得到」的步態 garnish（forward_gated）。
 TARGET_SPEED    = 1.0
-CTRL_WEIGHT     = 5.0
-GAIT_WEIGHT     = 2.0
-POSTURE_WEIGHT  = 2.0
-ALIVE_WEIGHT    = 0.0         # 03 為 1.0；歸零以徹底消除「站著的收入」（見 ant_v5_attractor_fix.md）。
-                              # 摔倒由 terminate_when_unhealthy 結束 episode 提供「別摔」訊號，不需 alive 底分
-GAIT_MODE       = "antiphase"
-FORWARD_MODE    = "progress"
-SMOOTH_WEIGHT   = 0.1         # jerk 懲罰起始值，視 gait/r_smooth 量級再調
-TILT_WEIGHT     = 0.5         # 軀幹直立懲罰起始值
+CTRL_WEIGHT     = float(os.environ.get("CTRL_WEIGHT", 0.5))    # 溫和（原 5.0 太重→逼出摔死）
+GAIT_WEIGHT     = float(os.environ.get("GAIT_WEIGHT", 2.0))    # 步態品質乘子（只在前進時生效）
+POSTURE_WEIGHT  = float(os.environ.get("POSTURE_WEIGHT", 0.5)) # 溫和
+ALIVE_WEIGHT    = float(os.environ.get("ALIVE_WEIGHT", 0.5))   # 小底分：站著≈+0.4 非負→不摔死；但遠小於走路→不站著
+GAIT_MODE       = os.environ.get("GAIT_MODE", "antiphase_gated")
+FORWARD_MODE    = os.environ.get("FORWARD_MODE", "progress")
+FORWARD_WEIGHT  = float(os.environ.get("FORWARD_WEIGHT", 1.0))
+REWARD_STRUCTURE = os.environ.get("REWARD_STRUCTURE", "forward_gated")  # 步態 bonus 以前進為閘門：不前進拿不到
+SMOOTH_WEIGHT   = float(os.environ.get("SMOOTH_WEIGHT", 0.02)) # 溫和
+TILT_WEIGHT     = float(os.environ.get("TILT_WEIGHT", 0.2))    # 溫和
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -68,8 +83,10 @@ def make_env(seed: int = 0, render_mode: str | None = None) -> gym.Env:
         alive_weight=ALIVE_WEIGHT,
         gait_mode=GAIT_MODE,
         forward_mode=FORWARD_MODE,
+        forward_weight=FORWARD_WEIGHT,
         smooth_weight=SMOOTH_WEIGHT,
         tilt_weight=TILT_WEIGHT,
+        reward_structure=REWARD_STRUCTURE,
     )
     env.reset(seed=seed)
     return env
@@ -114,24 +131,37 @@ class EvalScorecardCallback(BaseCallback):
     比訓練中帶 noise 的 record_mean 更能反映模型實際表現。
     """
 
-    def __init__(self, eval_interval: int = 50_000, video_root: str = f"{OUTPUT_DIR}/videos", verbose: int = 0):
+    def __init__(self, eval_interval: int = 50_000, video_interval: int = 200_000,
+                 video_root: str = f"{OUTPUT_DIR}/videos", verbose: int = 0):
         super().__init__(verbose)
         self.eval_interval = eval_interval
+        self.video_interval = video_interval
         self.video_root = video_root
+        self._last_eval_block = 0
+        self._last_video_block = 0
 
     def _on_step(self) -> bool:
-        if self.n_calls % self.eval_interval == 0:
-            self._record_episode(step=self.num_timesteps)
+        # 以 num_timesteps 計（多環境時每步會跳 n_envs），確保每 eval_interval 步觸發一次。
+        # 數值 scorecard 每 eval_interval 跑（便宜）；錄影只每 video_interval 跑（moviepy 編碼貴）。
+        block = self.num_timesteps // self.eval_interval
+        if block > self._last_eval_block:
+            self._last_eval_block = block
+            video_block = self.num_timesteps // self.video_interval
+            record_video = video_block > self._last_video_block
+            if record_video:
+                self._last_video_block = video_block
+            self._record_episode(step=self.num_timesteps, record_video=record_video)
         return True
 
-    def _record_episode(self, step: int) -> None:
-        eval_env = make_env(seed=SEED + 1, render_mode="rgb_array")
-        eval_env = RecordVideo(
-            eval_env,
-            video_folder=f"{self.video_root}/step_{step:07d}",
-            name_prefix=f"eval_step_{step}",
-            episode_trigger=lambda ep: True,
-        )
+    def _record_episode(self, step: int, record_video: bool = True) -> None:
+        eval_env = make_env(seed=SEED + 1, render_mode="rgb_array" if record_video else None)
+        if record_video:
+            eval_env = RecordVideo(
+                eval_env,
+                video_folder=f"{self.video_root}/step_{step:07d}",
+                name_prefix=f"eval_step_{step}",
+                episode_trigger=lambda ep: True,
+            )
         dt = eval_env.unwrapped.dt  # Ant-v5 ≈ 0.05s，用來把 x_velocity 積分成距離
 
         obs, _ = eval_env.reset()
@@ -180,10 +210,27 @@ class EvalScorecardCallback(BaseCallback):
 if __name__ == "__main__":
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    train_env = DummyVecEnv([lambda: make_env(seed=SEED)])
+    # 多環境用 SubprocVecEnv（各 env 跑在獨立 process、不受 GIL 限制，並行收集經驗）；
+    # 單環境退回 DummyVecEnv，行為與 03 一致。
+    if N_ENVS > 1:
+        # partial（可 pickle）+ fork（此處尚未初始化 CUDA/GL，fork 安全；避免 spawn 重匯入 "04..." 檔名問題）
+        train_env = SubprocVecEnv(
+            [partial(make_env, seed=SEED + i) for i in range(N_ENVS)],
+            start_method="fork",
+        )
+    else:
+        train_env = DummyVecEnv([lambda: make_env(seed=SEED)])
 
     n_actions = train_env.action_space.shape[-1]
     action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+
+    # 維持「每收集 1 筆 transition 做 1 次梯度更新」的 1:1 比例（與單環境 TD3 預設相同），
+    # 確保總梯度更新數 ≈ 總步數 = MAX_TIMESTEPS，資料利用率不變。
+    # 多環境必須用 step 為單位的 train_freq（SB3 不允許多環境 episodic 訓練）。
+    if N_ENVS > 1:
+        freq_kwargs = dict(train_freq=(1, "step"), gradient_steps=N_ENVS)
+    else:
+        freq_kwargs = dict()  # 沿用 TD3 預設 train_freq=(1,"episode"), gradient_steps=-1（亦為 1:1）
 
     model = TD3(
         "MlpPolicy",
@@ -201,10 +248,12 @@ if __name__ == "__main__":
         tensorboard_log=f"{OUTPUT_DIR}/tb",
         verbose=1,
         seed=SEED,
+        **freq_kwargs,
     )
 
+    # CheckpointCallback 的 save_freq 以「vec-step」計，多環境要除以 N_ENVS 才是每 CHECKPOINT_FREQ 步
     checkpoint_cb = CheckpointCallback(
-        save_freq=CHECKPOINT_FREQ,
+        save_freq=max(CHECKPOINT_FREQ // N_ENVS, 1),
         save_path=f"{OUTPUT_DIR}/checkpoints",
         name_prefix="td3_gait",
     )
@@ -213,7 +262,7 @@ if __name__ == "__main__":
         total_timesteps=MAX_TIMESTEPS,
         callback=[
             GaitMonitorCallback(),
-            EvalScorecardCallback(eval_interval=EVAL_INTERVAL, verbose=1),
+            EvalScorecardCallback(eval_interval=EVAL_INTERVAL, video_interval=VIDEO_INTERVAL, verbose=1),
             checkpoint_cb,
         ],
         progress_bar=True,

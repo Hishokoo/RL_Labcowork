@@ -34,6 +34,14 @@ class RealisticGaitWrapper(gym.Wrapper):
     smooth_weight / tilt_weight 預設 0（不影響 03）：
     - smooth_weight：懲罰相鄰動作差（jerk），抓「抽搐 / 慣性甩動」。
     - tilt_weight  ：懲罰軀幹傾斜（直立度），補足只看高度 z 的姿態 reward。
+
+    gait_mode "antiphase_gated"（05 起，修正 04 的站著 attractor）：
+    - 04 的 "antiphase" 在靜態站姿仍給 r_gait≈0.77（同對角線兩腳同步的 intra 項），1M 實測
+      agent 收斂到站著不動。"antiphase_gated" 把整個步態 reward 乘上 anti_phase 當 gate：
+      r_gait = gait_weight · anti_phase · (0.5 + 0.25·intra1 + 0.25·intra2)。
+      站著 anti_phase≈0 → r_gait≈0（站著零步態收益），真 trot 單腳支撐瞬間 → 滿分。
+    forward_weight：速度 reward 的權重（預設 1.0 = 03/04 行為）。05 調高（如 2.0）給更強的
+      「要移動才有分」拉力，配合 gated gait 把 agent 推出站著盆地。
     """
 
     def __init__(
@@ -47,8 +55,10 @@ class RealisticGaitWrapper(gym.Wrapper):
         contact_threshold: float = 1.0,
         gait_mode: str = "legacy",
         forward_mode: str = "deviation",
+        forward_weight: float = 1.0,
         smooth_weight: float = 0.0,
         tilt_weight: float = 0.0,
+        reward_structure: str = "additive",
     ):
         super().__init__(env)
         self.target_speed = target_speed
@@ -57,14 +67,18 @@ class RealisticGaitWrapper(gym.Wrapper):
         self.posture_weight = posture_weight
         self.alive_weight = alive_weight
         self.contact_threshold = contact_threshold
-        if gait_mode not in ("legacy", "antiphase"):
-            raise ValueError(f"未知的 gait_mode：{gait_mode}（可用 'legacy' / 'antiphase'）")
+        if gait_mode not in ("legacy", "antiphase", "antiphase_gated"):
+            raise ValueError(f"未知的 gait_mode：{gait_mode}（可用 'legacy' / 'antiphase' / 'antiphase_gated'）")
         if forward_mode not in ("deviation", "progress"):
             raise ValueError(f"未知的 forward_mode：{forward_mode}（可用 'deviation' / 'progress'）")
+        if reward_structure not in ("additive", "forward_gated"):
+            raise ValueError(f"未知的 reward_structure：{reward_structure}（可用 'additive' / 'forward_gated'）")
         self.gait_mode = gait_mode
         self.forward_mode = forward_mode
+        self.forward_weight = forward_weight
         self.smooth_weight = smooth_weight
         self.tilt_weight = tilt_weight
+        self.reward_structure = reward_structure
         self.prev_contacts = np.zeros(4)
         self.prev_action = np.zeros(env.action_space.shape[0], dtype=np.float64)
         self.foot_body_ids = FOOT_BODY_IDS
@@ -102,9 +116,9 @@ class RealisticGaitWrapper(gym.Wrapper):
         x_vel = info.get("x_velocity", 0.0)
         if self.forward_mode == "progress":
             # 站著 = 0、達到 target 才滿分、超過 target 不再加分（速度上限仍在）
-            r_forward = max(0.0, min(x_vel, self.target_speed))
+            r_forward = self.forward_weight * max(0.0, min(x_vel, self.target_speed))
         else:  # "deviation"：03 行為，偏離 target 即罰（站著 = -target_speed）
-            r_forward = -abs(x_vel - self.target_speed)
+            r_forward = -self.forward_weight * abs(x_vel - self.target_speed)
 
         # 2. 存活基本分（沿用原 env 的 healthy 判定）
         r_alive = self.alive_weight if is_healthy else 0.0
@@ -113,9 +127,17 @@ class RealisticGaitWrapper(gym.Wrapper):
         r_ctrl = -self.ctrl_weight * float(np.sum(np.square(action)))
 
         # 4. 步態 reward（核心）：trot 對角線交替
-        if self.gait_mode == "antiphase":
+        if self.gait_mode == "antiphase_gated":
+            # 用 anti_phase 當乘法 gate：靜態姿勢 anti_phase≈0 → r_gait≈0（站著零步態收益,
+            # 修正 04 站著仍拿 0.77 的 attractor）。真 trot 單腳支撐瞬間 anti=1、intra=1 → 滿分。
+            intra1 = 1.0 - abs(contacts[0] - contacts[3])  # FL, BR 同相
+            intra2 = 1.0 - abs(contacts[1] - contacts[2])  # FR, BL 同相
+            anti = gait_metrics.anti_phase(contacts)
+            r_gait = self.gait_weight * anti * (0.5 + 0.25 * intra1 + 0.25 * intra2)
+        elif self.gait_mode == "antiphase":
             # 反相為主導（0.6）：兩條對角線「一抬一踏」才給分，靜態姿勢 = 0。
             # 同步為輔（各 0.2）：維持同一對角線內兩腳協調，避免單腳亂跳。
+            # 註：靜態時 intra 項仍給 0.4·gait_weight≈0.8（04 站著 attractor 的成因），改用 *_gated。
             intra1 = 1.0 - abs(contacts[0] - contacts[3])  # FL, BR 同相
             intra2 = 1.0 - abs(contacts[1] - contacts[2])  # FR, BL 同相
             anti = gait_metrics.anti_phase(contacts)
@@ -140,7 +162,18 @@ class RealisticGaitWrapper(gym.Wrapper):
         upright = gait_metrics.uprightness(qpos)
         r_tilt = -self.tilt_weight * (1.0 - upright)
 
-        total = r_forward + r_alive + r_ctrl + r_gait + r_posture + r_smooth + r_tilt
+        if self.reward_structure == "forward_gated":
+            # 正向 reward 全部以「前進」為閘門：total_正向 = forward_progress·(1 + r_gait)。
+            # 不前進 → forward_progress≈0 → 連步態 bonus 都歸零,站著/原地踏步都拿不到正分
+            # （修正 04 站著、05 原地踏步的鑽洞）。懲罰（ctrl/smooth/tilt/posture）仍照算。
+            # r_gait 在此當品質乘子（搭 antiphase_gated 時 ∈[0, gait_weight]）。
+            forward_progress = max(0.0, min(x_vel, self.target_speed))
+            gait_contrib = forward_progress * r_gait
+            total = forward_progress + gait_contrib + r_alive + r_ctrl + r_smooth + r_tilt + r_posture
+            r_forward = forward_progress   # 記錄用：實際前進量
+            r_gait = gait_contrib          # 記錄用：步態的實際貢獻（已被前進閘門）
+        else:
+            total = r_forward + r_alive + r_ctrl + r_gait + r_posture + r_smooth + r_tilt
         components = {
             "forward": r_forward,
             "alive": r_alive,

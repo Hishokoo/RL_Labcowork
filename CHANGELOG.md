@@ -7,6 +7,20 @@
 
 ---
 
+## [2026-06-22] — 04 reward 迭代到「會走」+ pc106(GB10)訓練環境 + SBX 探索
+
+### 變更
+- `04train_td3.py`：改成 **env-var 驅動的 runner**（reward 旋鈕 / `OUTPUT_DIR` / `MAX_TIMESTEPS` / `VIDEO_INTERVAL` 等皆可用環境變數覆寫），每個 reward 調參用同一支腳本跑、不另立編號檔。經三次失敗模式後（站著不動 / 原地踏步 / 快速摔倒），**預設調到會走的配方**：`reward_structure="forward_gated"` + `gait_mode="antiphase_gated"` + 溫和懲罰（`ctrl_weight=0.5`、posture 0.5、smooth 0.02、tilt 0.2）+ 小 `alive_weight=0.5` 底分。300k 驗證：speed_err 0.94→0.22、x_velocity→~1.2、episode 全程 1000 不摔、return~1600。錄影與數值 scorecard 解耦（`VIDEO_INTERVAL`）以加速迭代；保留多環境（SubprocVecEnv）路徑但預設單環境（實測多環境只快 ~13%，瓶頸在 SB3 單執行緒迴圈）
+- `tools/gait_wrapper.py`：`RealisticGaitWrapper` 新增 `gait_mode="antiphase_gated"`（步態 reward 用 anti_phase 當乘法 gate，靜態拿不到分）、`reward_structure="forward_gated"`（步態 bonus 以前進為閘門，不前進整個正向 reward 歸零）、`forward_weight` 參數。**預設值維持 03 行為，向後相容**
+
+### 新增
+- `04train_td3_sbx.py`：SBX(SB3 + Jax)後端版,測試 Jax 能否加速。結論:**單一 CPU MuJoCo 環境下不會更快**(SBX-GPU 185 fps < SB3 211 < SBX-CPU 261;瓶頸是環境步進與單執行緒迴圈,GPU 全程 ~12%)。真正的 5-10x 需 GPU 向量化環境(MJX/Brax),非換後端可得
+
+### 備註
+- 訓練機 **pc106**(`aitopatom-186a`,aarch64 + NVIDIA GB10 Blackwell):venv `~/rlap_env`(torch 2.12.1+cu130 / sb3 2.9.0 / gymnasium 1.3.0 / mujoco 3.9.0 / jax 0.10.2 cuda13);離屏錄影需 `MUJOCO_GL=egl`。GPU 在 GB10 上可運算(CUDA 13 支援 Blackwell),但對 TD3+MlpPolicy 加速有限
+
+---
+
 ## [2026-06-21] — 04 步態品質指標優化（尚未訓練）
 
 ### 新增
