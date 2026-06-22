@@ -62,6 +62,7 @@ class RealisticGaitWrapper(gym.Wrapper):
         forward_gate_shape: str = "cap",
         intra_weight: float = 0.25,
         gait_speed_gate: float = 0.0,
+        ctrl_schedule: tuple | None = None,
     ):
         super().__init__(env)
         self.target_speed = target_speed
@@ -91,9 +92,28 @@ class RealisticGaitWrapper(gym.Wrapper):
         if gait_speed_gate < 0.0:
             raise ValueError(f"gait_speed_gate 須 ≥ 0（0=關閉、>0=啟用的速度門檻 m/s）：{gait_speed_gate}")
         self.gait_speed_gate = gait_speed_gate
+        # ctrl 排程（None=關閉，用固定 ctrl_weight）。(t0, t1, c0, c1)：step≤t0→c0、
+        # t0..t1 線性 c0→c1、>t1→c1。用來在「從零訓練」時先放鬆 ctrl 讓 agent 學會站穩/移動，
+        # 再漸進加重回到目標，避免早期隨機動作配重 ctrl 產生巨大負 reward → fast-fall。
+        if ctrl_schedule is not None:
+            t0, t1, c0, c1 = ctrl_schedule
+            if not (0 <= t0 <= t1):
+                raise ValueError(f"ctrl_schedule 須 0≤t0≤t1：{ctrl_schedule}")
+        self.ctrl_schedule = ctrl_schedule
+        self._gstep = 0  # 累積訓練步數（跨 episode 不重置）——n_envs=1 下 = 全域訓練步
         self.prev_contacts = np.zeros(4)
         self.prev_action = np.zeros(env.action_space.shape[0], dtype=np.float64)
         self.foot_body_ids = FOOT_BODY_IDS
+
+    def _effective_ctrl_weight(self) -> float:
+        if self.ctrl_schedule is None:
+            return self.ctrl_weight
+        t0, t1, c0, c1 = self.ctrl_schedule
+        if self._gstep <= t0:
+            return c0
+        if self._gstep >= t1:
+            return c1
+        return c0 + (c1 - c0) * (self._gstep - t0) / (t1 - t0)
 
     def reset(self, **kwargs):
         self.prev_contacts = np.zeros(4)
@@ -114,6 +134,7 @@ class RealisticGaitWrapper(gym.Wrapper):
         info["original_reward"] = _orig_reward
         self.prev_contacts = contacts
         self.prev_action = np.asarray(action, dtype=np.float64)
+        self._gstep += 1  # 累積訓練步（給 ctrl_schedule 用）
 
         return obs, reward, terminated, truncated, info
 
@@ -135,8 +156,8 @@ class RealisticGaitWrapper(gym.Wrapper):
         # 2. 存活基本分（沿用原 env 的 healthy 判定）
         r_alive = self.alive_weight if is_healthy else 0.0
 
-        # 3. 控制懲罰（加重版）
-        r_ctrl = -self.ctrl_weight * float(np.sum(np.square(action)))
+        # 3. 控制懲罰（加重版）。ctrl_schedule 啟用時用漸進權重（早期放鬆防 fast-fall）。
+        r_ctrl = -self._effective_ctrl_weight() * float(np.sum(np.square(action)))
 
         # 4. 步態 reward（核心）：trot 對角線交替
         if self.gait_mode == "antiphase_gated":
