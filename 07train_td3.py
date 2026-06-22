@@ -48,4 +48,5 @@ if __name__ == "__main__":
         video_interval=int(os.environ.get("VIDEO_INTERVAL", 200_000)),  # 影片每 200k（與各版一致）
         checkpoint_freq=int(os.environ.get("CHECKPOINT_FREQ", 100_000)),
         n_envs=int(os.environ.get("N_ENVS", 1)),
+        seed=int(os.environ.get("SEED", 0)),  # 14 multi-seed 驗證用：SEED=1/2 + OUTPUT_DIR 覆寫
     )
