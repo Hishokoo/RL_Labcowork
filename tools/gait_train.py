@@ -171,3 +171,53 @@ def train(wrap_kwargs: dict, output_dir: str, *, target_speed: float = 1.0,
     )
     model.save(f"{output_dir}/final_model")
     print("Training complete.")
+
+
+def finetune(wrap_kwargs: dict, output_dir: str, init_model_path: str, *,
+             target_speed: float = 1.0, max_timesteps: int = 120_000,
+             learning_rate: float = 1e-4, action_noise_sigma: float = 0.03,
+             eval_interval: int = 25_000, video_interval: int = 25_000,
+             checkpoint_freq: int = 25_000, seed: int = 0) -> None:
+    """從既有 checkpoint 接續微調（curriculum 用）：載入 actor/critic、換成新 reward、
+    清空 replay buffer（不載入舊 buffer，避免混用新舊 reward）、不做 random warmup
+    （learning_starts=0，第一個 episode 即用載入的策略收集），用較小 lr / action noise。
+
+    與 train() 的差別僅在「初始化方式」——callback / 指標 / 錄影完全沿用，確保可比較。
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    train_env = DummyVecEnv([lambda: make_env(wrap_kwargs, seed=seed)])
+
+    n_actions = train_env.action_space.shape[-1]
+    action_noise = NormalActionNoise(
+        mean=np.zeros(n_actions), sigma=action_noise_sigma * np.ones(n_actions))
+
+    # 載入 03 的 actor/critic，覆寫 lr / action_noise / learning_starts；不載入舊 replay buffer
+    # （TD3.load 預設不還原 buffer）→ buffer 全新清空，符合「避免混用新舊 reward」。
+    model = TD3.load(
+        init_model_path, env=train_env,
+        custom_objects={
+            "learning_rate": learning_rate,
+            "action_noise": action_noise,
+            "learning_starts": 0,          # 不做 random warmup：第一 episode 即用載入策略
+        },
+        tensorboard_log=f"{output_dir}/tb", verbose=1, seed=seed,
+    )
+
+    checkpoint_cb = CheckpointCallback(
+        save_freq=max(checkpoint_freq, 1),
+        save_path=f"{output_dir}/checkpoints", name_prefix="td3_gait_ft",
+    )
+
+    model.learn(
+        total_timesteps=max_timesteps,
+        callback=[
+            GaitMonitorCallback(),
+            EvalScorecardCallback(wrap_kwargs, target_speed, output_dir,
+                                  eval_interval, video_interval, seed, verbose=1),
+            checkpoint_cb,
+        ],
+        progress_bar=True,
+        reset_num_timesteps=True,  # 微調的步數從 0 起算，eval interval 才對齊
+    )
+    model.save(f"{output_dir}/final_model")
+    print("Fine-tune complete.")
