@@ -31,7 +31,7 @@
 - `10train_td3.py`：★ 結構性換設計 ★ `gait_mode="legacy"` × `forward_gated`，假設「03 觀感來自 legacy 步態公式」。10-ep eval **反證此假設**：jerk 0.216 / CoT 4.91 / regularity 0.128 皆 shaped 版最差，diagonal_sync 僅 0.606。**真正教訓：03 的平滑/省力來自 `ctrl_weight=5.0` + additive，不是步態公式**——下一步主攻 ctrl_weight
 - `output/03_vs_04_comparison.html`：03–10 七方量化比較報告（含 10 反證實驗與「下一步主攻 ctrl」的新方向）
 - `11train_td3.py`：03 + 唯一變因 gait_speed_gate=0.3，從零訓練。300k 探針**秒摔（ep_len 13）**——證明站著 gait 分數是 03 的學習鷹架（非單純缺點）：gate 後站著從 +1.6 高峰變平地 0，配 ctrl=5/deviation 致 cold-start 塌進「快速摔倒」attractor
-- `12train_td3.py` + `tools/gait_train.py` 新增 `finetune()`：checkpoint curriculum 探針。載入 03 final_model→換 gate reward→清 buffer→learning_starts=0→lr 1e-4/noise 0.03→微調 120k。10-ep eval **保住 03 觀感**：ep_len 1000、jerk 0.042（≤0.05✅）、CoT 1.09（≤1.5✅）、diagonal_sync 0.689/upright 0.985≈03，僅速度 0.94→0.88（差 0.9 一點）。**結論：鷹架只在學會走前需要，兩階段 curriculum 可行**
+- `12train_td3.py` + `tools/gait_train.py` 新增 `finetune()`：checkpoint curriculum 探針。載入 03 final_model→換 gate reward→清 buffer→learning_starts=0→lr 1e-4/noise 0.03→微調 120k。10-ep eval **保住 03 觀感**：ep_len 1000、jerk 0.042（≤0.05✅）、CoT 1.09（≤1.5✅）、diagonal_sync 0.689/upright 0.985≈03，僅速度 0.94→0.88（差 0.9 一點）。**結論：鷹架只在學會走前需要，兩階段 curriculum 可行**。**★ 12@25k checkpoint 是目前最佳模型 ★**：10-ep eval ep_len 1000、mean_speed 0.983（>03 的 0.94）、jerk 0.037、CoT 0.960（<03 的 1.02）、diagonal_sync 0.678、anti_phase 0.245、upright 0.990——五項約束（=1000 / ≥0.9 / ≤0.05 / ≤1.5 / ≥0.65）全達標，且 speed/CoT/anti_phase/upright 都贏 03，站著 attractor 已用 gate 拿掉。final(120k) 速度漂到 0.88 是策略漂移，25k 為漂移前甜蜜點。**配方定案：03 → curriculum fine-tune（gate 0.3 / lr 1e-4 / noise 0.03）取 ~25k 早停**，下一步多 seed 驗證穩健性
 - `gait_videos/`（RLAP 根目錄，非版控）：整理好的各版 eval 影片，按版本分子資料夾、改檔名 `<版>_step_<step>.mp4`
 
 ### 變更
