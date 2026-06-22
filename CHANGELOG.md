@@ -7,15 +7,63 @@
 
 ---
 
-## [2026-06-22]
+## [2026-06-22] — 同步遠端並統一 gait_wrapper 命名
 
 ### 變更
-- `tools/gait_wrapper.py` 重新命名為 `tools/gait_wrapper_03.py`(Python 模組名不可以數字開頭 import,故不採 `03gait_wrapper.py`),同步修正 `03train_td3.py`、`03test_td3.py` 的 import 路徑
+- `tools/gait_wrapper.py` 重新命名為 `tools/gait_wrapper_03.py`(Python 模組名不可以數字開頭 import,故不採 `03gait_wrapper.py`),同步修正 `03train_td3.py`、`03test_td3.py`、`04train_td3_sbx.py`、`tools/gait_train.py` 的 import 路徑
 
 ## [2026-06-21]
 
 ### 新增
 - `03test_td3.py`：對應 `03train_td3.py` 的推論/模擬腳本，載入 SB3 `TD3.load()` 模型並套用相同的 `RealisticGaitWrapper` 與環境參數，於 MuJoCo human 模式下視覺化步態，支援 `--checkpoint` 與 `--episodes` 參數
+- `03train_td3.py`：以 Stable-Baselines3 TD3 + `tools/gait_wrapper_03.py`(`RealisticGaitWrapper`)訓練步態導向的 Ant-v5,獎勵四足交替著地(trot)、限制速度上限、強懲罰大幅動作,取代預設 reward 訓出的「慣性甩動」高速移動,規格見 `markdown/03_train_td3_spec.md`
+
+## [2026-06-22] — 步態量化評估管線 + 04→05→06→07 reward 迭代
+
+### 新增
+- `tools/gait_train.py`：抽出共用訓練骨架（`make_env` / `GaitMonitorCallback` / `EvalScorecardCallback` / `train`），各版改成只放 `WRAP_KWARGS` 的薄設定檔。影片每 200k 錄一支、TB 永遠開（四/五方比較需各版一致）
+- `tools/eval_scorecard.py`：載入 SB3 模型跑 N 個 deterministic episode，用 `gait_metrics` 算 scorecard 平均±標準差（與訓練 reward 無關，可公平比較）。用法 `python -m tools.eval_scorecard <name> <model_path> [n_episodes]`
+- `05train_td3.py`：融合版（加重 `gait_weight=3.0`/`posture=1.5`/`tilt=0.8`/`smooth=0.25`），10-ep eval：anti_phase 0.326、regularity 0.355 為各版最佳，但仍抖（jerk 0.158）且超速（x_vel 1.37）
+- `06train_td3.py`：`forward_gate_shape="tent"` 修超速 + `smooth=0.40`/`ctrl=1.5` 加重平滑。10-ep eval：mean_speed 0.83（修好超速）、jerk 0.087（04 的 1/4）、uprightness 0.989 反超 03，最接近 03 的 shaped 版；代價是 anti_phase 0.212、diagonal_sync 0.552 被磨柔
+- `07train_td3.py`：在 06 基礎上「把對角踏步銳利度拉回」——`gait_weight 3.0→4.5`（anti_phase 是乘法 gate，加重直接放大對角交替）、`smooth 0.40→0.30`、`ctrl 1.5→1.2`，其餘沿用 06。10-ep eval：**speed_error 0.100（全場最佳，連 03 都贏）、mean_speed 0.958（最準）**、anti_phase 0.212→0.267（回升超過 03），代價是 jerk 0.087→0.120、diagonal_sync 仍卡 0.544。各版量化見 `output/03_vs_04_comparison.html`（已更新為五方）
+- `output/03_vs_04_comparison.html`：03/04/05/06 四方量化比較報告（含結論與「往 03 逼」的下一步建議）
+- `gait_videos/`（RLAP 根目錄，非版控）：整理好的各版 eval 影片，按版本分子資料夾、改檔名 `<版>_step_<step>.mp4`
+
+### 變更
+- `tools/gait_wrapper.py`：`RealisticGaitWrapper` 新增 `forward_gate_shape`（`cap` 到目標即滿分／`tent` 太快也遞減壓超速）。預設 `cap` 維持既有行為
+- `04train_td3.py`：收斂為「會走」的溫和 `forward_gated` 設定，改成薄設定檔（套用 `tools/gait_train.train`）
+
+---
+
+## [2026-06-22] — 04 reward 迭代到「會走」+ pc106(GB10)訓練環境 + SBX 探索
+
+### 變更
+- `04train_td3.py`：改成 **env-var 驅動的 runner**（reward 旋鈕 / `OUTPUT_DIR` / `MAX_TIMESTEPS` / `VIDEO_INTERVAL` 等皆可用環境變數覆寫），每個 reward 調參用同一支腳本跑、不另立編號檔。經三次失敗模式後（站著不動 / 原地踏步 / 快速摔倒），**預設調到會走的配方**：`reward_structure="forward_gated"` + `gait_mode="antiphase_gated"` + 溫和懲罰（`ctrl_weight=0.5`、posture 0.5、smooth 0.02、tilt 0.2）+ 小 `alive_weight=0.5` 底分。300k 驗證：speed_err 0.94→0.22、x_velocity→~1.2、episode 全程 1000 不摔、return~1600。錄影與數值 scorecard 解耦（`VIDEO_INTERVAL`）以加速迭代；保留多環境（SubprocVecEnv）路徑但預設單環境（實測多環境只快 ~13%，瓶頸在 SB3 單執行緒迴圈）
+- `tools/gait_wrapper.py`：`RealisticGaitWrapper` 新增 `gait_mode="antiphase_gated"`（步態 reward 用 anti_phase 當乘法 gate，靜態拿不到分）、`reward_structure="forward_gated"`（步態 bonus 以前進為閘門，不前進整個正向 reward 歸零）、`forward_weight` 參數。**預設值維持 03 行為，向後相容**
+
+### 新增
+- `04train_td3_sbx.py`：SBX(SB3 + Jax)後端版,測試 Jax 能否加速。結論:**單一 CPU MuJoCo 環境下不會更快**(SBX-GPU 185 fps < SB3 211 < SBX-CPU 261;瓶頸是環境步進與單執行緒迴圈,GPU 全程 ~12%)。真正的 5-10x 需 GPU 向量化環境(MJX/Brax),非換後端可得
+
+### 備註
+- 訓練機 **pc106**(`aitopatom-186a`,aarch64 + NVIDIA GB10 Blackwell):venv `~/rlap_env`(torch 2.12.1+cu130 / sb3 2.9.0 / gymnasium 1.3.0 / mujoco 3.9.0 / jax 0.10.2 cuda13);離屏錄影需 `MUJOCO_GL=egl`。GPU 在 GB10 上可運算(CUDA 13 支援 Blackwell),但對 TD3+MlpPolicy 加速有限
+
+---
+
+## [2026-06-21] — 04 步態品質指標優化（尚未訓練）
+
+### 新增
+- `03test_td3.py`：對應 `03train_td3.py` 的推論/模擬腳本，載入 SB3 `TD3.load()` 模型並套用相同的 `RealisticGaitWrapper` 與環境參數，於 MuJoCo human 模式下視覺化步態，支援 `--checkpoint` 與 `--episodes` 參數
+- `tools/gait_metrics.py`：步態品質量化指標共用模組（`anti_phase`、`diagonal_sync`、`uprightness` per-step；`action_jerk`、`transport_cost`(CoT 代理)、`contact_regularity`(自相關週期性 0..1) per-episode），供 wrapper / 訓練 callback / 未來 eval 腳本共用，已用純 numpy 驗證數值
+- `04train_td3.py`：接續 03 的步態品質優化實驗。改用 `gait_mode="antiphase"`（步態 reward 以對角線反相為主導，修正 03 legacy 公式「站著 r_gait=1.6 反而高於走路」的隱性站著 attractor）、`forward_mode="progress"`（速度 reward 改 `max(0,min(x_vel,target))`，站著=0 而非 -1.0，符合 `ant_v5_attractor_fix.md` 結論）、新增 jerk 與軀幹直立懲罰；callback 擴充為每個 eval interval 跑 deterministic episode 算整段 scorecard 寫入 TensorBoard，並存中間 checkpoint（03 只有 final_model）。規格見 `markdown/04_train_td3_spec.md`
+- `markdown/04_train_td3_spec.md`：04 規格與 03 指標卡關的診斷（含「站著加分」bug 的驗證數據）
+
+### 變更
+- `tools/gait_wrapper.py`：`RealisticGaitWrapper` 新增 `gait_mode`、`forward_mode`、`smooth_weight`、`tilt_weight` 四個參數，並開始記錄 `smooth`/`tilt`/`uprightness`/`anti_phase` reward 分量。**全部預設值維持 03 行為**，03 可完全重現；僅 `04train_td3.py` 啟用新設定
+
+### 待辦
+- 與隊友對齊「站著扣分」機制的整合方式（該機制不在版控裡），再跑 1M 正式訓練
+
+### 新增（03，續）
 - `03train_td3.py`：以 Stable-Baselines3 TD3 + `tools/gait_wrapper_03.py`(`RealisticGaitWrapper`)訓練步態導向的 Ant-v5,獎勵四足交替著地(trot)、限制速度上限、強懲罰大幅動作,取代預設 reward 訓出的「慣性甩動」高速移動,規格見 `markdown/03_train_td3_spec.md`
 - `01test_td3.py`:對應 `01train_td3.py` baseline 模型的推論腳本
 - `markdown/ant_v5_attractor_fix.md`:記錄 `02train_td3.py` reward shaping 的除錯過程 —— Ant-v5 預設 `healthy_reward=1.0` 讓「站著不動」變成零風險 attractor,5 次實驗驗證後改用拿掉 healthy_reward + 提高 contact_cost_weight + 還原 forward_reward_weight 解決
