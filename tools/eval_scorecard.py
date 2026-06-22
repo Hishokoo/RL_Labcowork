@@ -62,6 +62,7 @@ def evaluate(model_path: str, n_episodes: int = 10, seed: int = 0) -> dict:
             anti_phase=float(np.mean([gait_metrics.anti_phase(c) for c in contacts])),
             diagonal_sync=float(np.mean([gait_metrics.diagonal_sync(c) for c in contacts])),
             uprightness=float(np.mean(uprights)),
+            stationary_fraction=gait_metrics.stationary_fraction(x_vels),
         ))
     env.close()
     keys = list(rows[0].keys())

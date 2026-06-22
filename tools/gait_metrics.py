@@ -76,6 +76,17 @@ def transport_cost(actions: np.ndarray, distance: float, eps: float = 1e-3) -> f
     return effort / max(abs(distance), eps)
 
 
+def stationary_fraction(x_vels: np.ndarray, thresh: float = 0.1) -> float:
+    """站著比例 0..1：前進速度低於 thresh（m/s）的時間步佔比，越低代表越沒在「站著/原地」。
+
+    用來確認步態不是靠站著/原地踏步達標（與站著 attractor 直接對應）。
+    """
+    x = np.asarray(x_vels, dtype=np.float64)
+    if len(x) == 0:
+        return 0.0
+    return float(np.mean(np.abs(x) < thresh))
+
+
 def contact_regularity(contact_seq: np.ndarray, min_lag: int = 5,
                        max_lag: int | None = None) -> float:
     """步態週期性 0..1：四腳接觸序列的自相關主峰平均。
