@@ -61,6 +61,7 @@ class RealisticGaitWrapper(gym.Wrapper):
         reward_structure: str = "additive",
         forward_gate_shape: str = "cap",
         intra_weight: float = 0.25,
+        gait_speed_gate: float = 0.0,
     ):
         super().__init__(env)
         self.target_speed = target_speed
@@ -87,6 +88,9 @@ class RealisticGaitWrapper(gym.Wrapper):
         if not 0.0 <= intra_weight <= 0.5:
             raise ValueError(f"intra_weight 須在 [0, 0.5]（兩個 intra 項合計 ≤ 1）：{intra_weight}")
         self.intra_weight = intra_weight
+        if gait_speed_gate < 0.0:
+            raise ValueError(f"gait_speed_gate 須 ≥ 0（0=關閉、>0=啟用的速度門檻 m/s）：{gait_speed_gate}")
+        self.gait_speed_gate = gait_speed_gate
         self.prev_contacts = np.zeros(4)
         self.prev_action = np.zeros(env.action_space.shape[0], dtype=np.float64)
         self.foot_body_ids = FOOT_BODY_IDS
@@ -159,6 +163,16 @@ class RealisticGaitWrapper(gym.Wrapper):
             diag2_sync = 1.0 - abs(contacts[1] - contacts[2])  # FR vs BL
             cross_pattern = abs(contacts[0] - contacts[1])     # FL vs FR 應反相
             r_gait = self.gait_weight * (0.4 * diag1_sync + 0.4 * diag2_sync + 0.2 * cross_pattern)
+
+        # 4b. 柔和速度 gate（只作用在 r_gait，不乘整個 reward）：
+        # 修正 legacy 的唯一缺點——站著（四腳著地）時 diag1=diag2=1 → r_gait=0.8·gait_weight 是
+        # 站著 attractor。用 smoothstep 把 r_gait 在低速時平滑歸零：x_vel≥gate 幾乎完全恢復、
+        # x_vel=0 時為 0。與 forward_gated 的差別：(1) 只 gate r_gait 不 gate forward/alive，
+        # 早期走不動仍有 alive/forward 訊號（學習穩定）；(2) smoothstep 連續無跳變，不放大 0/1
+        # 接觸訊號（不誘發頓腳）。gait_speed_gate=0 時關閉，r_gait 完全等於 03。
+        if self.gait_speed_gate > 0.0:
+            p = float(np.clip(max(x_vel, 0.0) / self.gait_speed_gate, 0.0, 1.0))
+            r_gait *= p * p * (3.0 - 2.0 * p)
 
         # 5. 姿態 reward（軀幹高度）
         torso_z = self.env.unwrapped.data.qpos[2]
