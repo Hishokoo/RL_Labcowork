@@ -3,24 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>03 / 04 / 05 / 06 / 07 步態量化比較</title>
+<title>03 / 04 / 05 / 06 / 07 / 08 步態量化比較</title>
 <style>
   :root{--g:#1f9d55;--gbg:#e3f5ea;--mid:#fff7e0;--ink:#1a2230;--mut:#6b7686;--line:#e3e7ee;}
   *{box-sizing:border-box}
   body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;
-       color:var(--ink);max-width:1180px;margin:0 auto;padding:32px 20px 64px;line-height:1.6;background:#fbfcfe}
+       color:var(--ink);max-width:1240px;margin:0 auto;padding:32px 20px 64px;line-height:1.6;background:#fbfcfe}
   h1{font-size:25px;margin:0 0 4px}
   .sub{color:var(--mut);font-size:14px;margin-bottom:20px}
   .verdict{background:linear-gradient(180deg,#fff,#f6f9ff);border:1px solid var(--line);border-left:4px solid #3a6ff7;
            border-radius:12px;padding:16px 20px;margin:18px 0 26px}
   .verdict h2{margin:0 0 8px;font-size:17px}
   .verdict p{margin:6px 0;font-size:14.5px}
-  table{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff;border:1px solid var(--line);
+  table{border-collapse:collapse;width:100%;font-size:13px;background:#fff;border:1px solid var(--line);
         border-radius:12px;overflow:hidden}
-  th,td{padding:8px 9px;text-align:center;border-bottom:1px solid var(--line)}
+  th,td{padding:8px 8px;text-align:center;border-bottom:1px solid var(--line)}
   th{background:#f3f6fb;font-weight:600;color:#33405a}
   td.metric{text-align:left;font-weight:600}
-  td.dir{color:var(--mut);font-size:11.5px;white-space:nowrap}
+  td.dir{color:var(--mut);font-size:11px;white-space:nowrap}
   .grp td{background:#eef2f9;text-align:left;font-weight:700;color:#33405a;font-size:12.5px}
   .win{background:var(--gbg);color:#15643f;font-weight:700}
   .win::after{content:" ▲";font-size:9px;color:var(--g)}
@@ -41,20 +41,20 @@
 </head>
 <body>
 
-<h1>步態量化比較 — 03 / 04 / 05 / 06 / 07</h1>
+<h1>步態量化比較 — 03 / 04 / 05 / 06 / 07 / 08</h1>
 <div class="sub">各載入 <code>final_model</code>（皆 1M steps）、跑 10 個 deterministic episode、用同一套
 <code>tools/gait_metrics</code> 量測（與訓練 reward 無關，可公平比較）。數值＝平均（小字＝標準差）。
-<span class="legend"><span class="chip w">▲ 該列總冠軍</span><span class="chip s">shaped(04–07) 最佳</span></span></div>
+<span class="legend"><span class="chip w">▲ 該列總冠軍</span><span class="chip s">shaped(04–08) 最佳</span></span></div>
 
 <div class="verdict">
-  <h2>結論：07 拿下全場最準的速度控制（speed_error 0.100 連 03 都贏），對角踏步也回升，但 jerk 略退、diagonal_sync 仍未回來</h2>
-  <p class="arc"><b>調參軌跡：</b>04（抖 0.33、超速 1.29）→ 05（節奏最佳但抖 0.16、超速 1.37）→ 06（修超速 0.83、抖砍到 0.087、最直立，但踏步被磨柔）→ <b>07（加重 gait 拉回踏步、放鬆 smooth：速度正中 0.958、speed_error 0.100 全場最佳）</b>。</p>
-  <p>• <b>07 速度控制全場最佳</b>：mean_speed <b>0.958</b>（離目標 1.0 僅 0.042，比 03 的 0.94 更準）、speed_error <b>0.100</b>（總冠軍，贏 03 的 0.140）。加重 gait + 放鬆 ctrl 讓它穩穩踩在目標速度。</p>
-  <p>• <b>07 對角交替回升</b>：anti_phase 0.212(06)→<b>0.267</b>（已超過 03 的 0.209），驗證「forward-gated 下加重 <code>gait_weight</code> 能安全把 anti_phase 拉回」的假設。</p>
-  <p>• <b>代價一：jerk 略退</b>：smooth 0.40→0.30 換來踏步銳利，jerk 0.087(06)→<b>0.120</b>（仍遠優於 04/05，但離 06 退了一階）。CoT 同步從 2.62→3.01。</p>
-  <p>• <b>代價二：diagonal_sync 仍沒回來</b>（0.544，幾乎同 06）：加重 gait 拉回了「對角反相」(anti_phase)，但「同對角兩腳同步」(diagonal_sync) 依舊低——這項仍由 03(0.712)/05(0.677) 領先。</p>
-  <p style="color:var(--mut);font-size:13.5px">一句話：<b>07 是「速度最準 + 平衡」的版本</b>——拿下速度雙冠、踏步交替回升，代價是平滑度退回 06 與 05 之間。
-  若以「速度準度 + 整體平衡」為標準 07 最佳；要最平滑省力仍是 03，要最直立是 06，要最銳利節奏是 05。</p>
+  <h2>結論：到 07/08 已逼出一條「速度準 ↔ 節奏銳利 ↔ 平滑省力」的取捨前緣，每版各占一個甜蜜點</h2>
+  <p class="arc"><b>調參軌跡：</b>04（抖、超速）→ 05（節奏好但抖、超速）→ 06（修超速、最平滑直立，但踏步被磨柔）→ 07（<b>速度雙冠</b> 0.958/0.100、踏步回升）→ 08（<b>節奏/交替/直立三冠</b>，最像教科書 trot，代價是速度準度與平滑退一階）。</p>
+  <p>• <b>07 = 速度最準 + 平衡</b>：mean_speed 0.958、speed_error 0.100（皆全場最佳，連 03 都贏），各項無明顯短板。</p>
+  <p>• <b>08 = 最像教科書 trot</b>：再把 <code>intra_weight</code> 0.25→0.35、smooth 微升 0.35，拿下 <b>regularity 0.380 / anti_phase 0.358 / uprightness 0.993</b> 三項總冠軍——步態最週期、對角交替最明顯、軀幹最直立。</p>
+  <p>• <b>關鍵發現（diagonal_sync 的牆）</b>：加重 intra 把 anti_phase 大幅拉起（0.267→0.358），但 <b>diagonal_sync 只微動（0.544→0.575）</b>，邊際效益遞減。diagonal_sync 似乎跟 03 那種較慢的 legacy 步態結構綁定，不是這個旋鈕能輕易補回——03 的 0.712 仍遙遙領先。</p>
+  <p>• <b>08 的代價</b>：踏步更賣力 → 速度準度退（speed_error 0.100→0.168）、jerk（0.120→0.133）與 CoT（3.01→4.16）變差。<b>節奏銳利與平滑省力是互斥的兩端。</b></p>
+  <p style="color:var(--mut);font-size:13.5px">一句話：<b>沒有單一全贏的版本，而是一條取捨前緣。</b>
+  要速度準+平衡選 07；要最像 trot（節奏/交替/直立）選 08；要最平滑省力仍是 03；要最平滑的 shaped 版是 06。</p>
 </div>
 
 <table>
@@ -66,72 +66,73 @@
       <th>05<br><span class="std">融合</span></th>
       <th>06<br><span class="std">tent+平滑</span></th>
       <th>07<br><span class="std">加重gait</span></th>
+      <th>08<br><span class="std">加重intra</span></th>
     </tr>
   </thead>
   <tbody>
-    <tr class="grp"><td colspan="7">移動 / 速度控制（目標速度 = 1.0）</td></tr>
+    <tr class="grp"><td colspan="8">移動 / 速度控制（目標速度 = 1.0）</td></tr>
     <tr>
       <td class="metric">mean_speed 平均速度</td><td class="dir">越接近 1.0</td>
       <td>0.94</td><td class="lose">1.29</td><td class="lose">1.37</td>
       <td class="lose">0.83</td>
-      <td class="win">0.958<br><span class="std">最準</span></td>
+      <td class="win">0.958</td><td class="best-shaped">0.922</td>
     </tr>
     <tr>
       <td class="metric">speed_error 速度誤差</td><td class="dir">越低越好</td>
       <td>0.140</td><td class="lose">0.328</td><td class="lose">0.397</td><td>0.219</td>
-      <td class="win">0.100</td>
+      <td class="win">0.100</td><td>0.168</td>
     </tr>
     <tr>
       <td class="metric">episode_length 存活步數</td><td class="dir">越高越好</td>
-      <td class="tie">1000</td><td class="tie">1000</td><td class="tie">1000</td><td class="tie">1000</td><td class="tie">1000</td>
+      <td class="tie">1000</td><td class="tie">1000</td><td class="tie">1000</td><td class="tie">1000</td><td class="tie">1000</td><td class="tie">1000</td>
     </tr>
 
-    <tr class="grp"><td colspan="7">步態品質（節奏 / 協調）</td></tr>
+    <tr class="grp"><td colspan="8">步態品質（節奏 / 協調）</td></tr>
     <tr>
       <td class="metric">contact_regularity 週期性</td><td class="dir">越高越好</td>
-      <td class="lose">0.239</td><td>0.334</td><td class="win">0.355</td><td>0.344</td><td class="lose">0.308</td>
+      <td class="lose">0.239</td><td>0.334</td><td>0.355</td><td>0.344</td><td class="lose">0.308</td><td class="win">0.380</td>
     </tr>
     <tr>
       <td class="metric">anti_phase 對角交替</td><td class="dir">越高越好</td>
-      <td class="lose">0.209</td><td>0.321</td><td class="win">0.326</td><td class="lose">0.212</td><td>0.267</td>
+      <td class="lose">0.209</td><td>0.321</td><td>0.326</td><td class="lose">0.212</td><td>0.267</td><td class="win">0.358</td>
     </tr>
     <tr>
       <td class="metric">diagonal_sync 對角同步</td><td class="dir">越高越好</td>
-      <td class="win">0.712</td><td>0.601</td><td>0.677</td><td class="lose">0.552</td><td class="lose">0.544</td>
+      <td class="win">0.712</td><td>0.601</td><td class="best-shaped">0.677</td><td class="lose">0.552</td><td class="lose">0.544</td><td>0.575</td>
     </tr>
 
-    <tr class="grp"><td colspan="7">平滑 / 效率 / 姿態（觀感主導項）</td></tr>
+    <tr class="grp"><td colspan="8">平滑 / 效率 / 姿態（觀感主導項）</td></tr>
     <tr>
       <td class="metric">action_jerk 動作抖動</td><td class="dir">越低越好</td>
       <td class="win">0.028</td><td class="lose">0.329</td><td>0.158</td>
-      <td class="best-shaped">0.087</td><td>0.120</td>
+      <td class="best-shaped">0.087</td><td>0.120</td><td>0.133</td>
     </tr>
     <tr>
       <td class="metric">transport_cost 能耗/距離</td><td class="dir">越低越好</td>
       <td class="win">1.02</td><td class="lose">5.56</td><td>2.85</td>
-      <td class="best-shaped">2.62</td><td>3.01</td>
+      <td class="best-shaped">2.62</td><td>3.01</td><td class="lose">4.16</td>
     </tr>
     <tr>
       <td class="metric">uprightness 軀幹直立度</td><td class="dir">越高越好</td>
-      <td>0.986</td><td>0.982</td><td class="lose">0.977</td><td class="win">0.989</td><td>0.979</td>
+      <td>0.986</td><td>0.982</td><td class="lose">0.977</td><td>0.989</td><td>0.979</td><td class="win">0.993</td>
     </tr>
   </tbody>
 </table>
 
 <h2 class="sec">怎麼選</h2>
 <ul style="font-size:14.5px">
-  <li><b>要速度最準 + 整體最平衡</b> → <b>07</b>。speed_error 0.100 全場最佳（連 03 都贏），anti_phase 也回升超過 03，各項無明顯短板。</li>
+  <li><b>要速度最準 + 整體最平衡</b> → <b>07</b>。speed_error 0.100 全場最佳，各項無短板。</li>
+  <li><b>要最像教科書 trot（最週期、對角交替最明顯、最直立）</b> → <b>08</b>。regularity/anti_phase/uprightness 三項總冠軍。</li>
   <li><b>要最自然俐落、最省力（raw 觀感最佳）</b> → <b>03</b>。jerk 0.028 / CoT 1.02 / diagonal_sync 0.712 三項仍最好。</li>
-  <li><b>要最平滑 + 最直立的 shaped 版</b> → <b>06</b>。jerk 0.087、uprightness 0.989 為各版最佳，但速度偏慢、踏步被磨柔。</li>
-  <li><b>要最明顯的對角「交替踏步」節奏</b> → <b>05</b>（anti_phase/regularity 最高，但抖、超速）。</li>
-  <li>04 已被 05/06/07 全面取代，僅留作對照。</li>
+  <li><b>要最平滑的 shaped 版</b> → <b>06</b>。jerk 0.087、uprightness 0.989。</li>
+  <li>04/05 已被 06/07/08 取代，僅留作軌跡對照。</li>
 </ul>
 
-<h2 class="sec">下一步（若要再逼 03 的平滑 + 拿回 diagonal_sync）</h2>
+<h2 class="sec">觀察與下一步</h2>
 <ol style="font-size:14.5px">
-  <li>07 已證實「加重 gait 拉回 anti_phase」可行且不傷速度。下一版可在 07 基礎上把 smooth 從 0.30 微升回 0.35，找「踏步銳利 ↔ jerk」的甜蜜點。</li>
-  <li>diagonal_sync 始終卡在 0.54：anti_phase（對角反相）與 diagonal_sync（同對角同步）需要的是不同訊號，目前 reward 只獎勵前者。若要拉回，可在 <code>antiphase_gated</code> 的 intra 項加權（0.25→0.35）強化「同對角兩腳同步」。</li>
-  <li>07 速度已正中（0.958），速度面無需再動；火力集中在「平滑 + diagonal_sync」即可。</li>
+  <li><b>取捨前緣已成形</b>：07（速度準）與 08（節奏銳利）分占兩端，中間靠 smooth / gait / intra 三個權重移動。沒有單一版本全贏。</li>
+  <li><b>diagonal_sync 撞牆</b>：intra_weight 0.25→0.35 對它幾乎無效（0.544→0.575）。若真要逼近 03 的 0.712，可能要改量測（contact_threshold 調鬆，捕捉對角腳的短暫同步）或接受「shaped 版 diagonal_sync 上限 ~0.6」這個結構限制。</li>
+  <li><b>若要 07 的速度 + 08 的節奏</b>：可試 07 的 smooth 0.30 配 08 的 intra 0.35（gait 維持 4.5），但 08 已顯示加重 intra 會犧牲速度準度，預期落在兩者之間。是否值得再開一版，看你要不要繼續逼。</li>
 </ol>
 
 <h2 class="sec">指標定義</h2>
@@ -145,7 +146,7 @@
 
 <div class="foot">
   方法：<code>tools/eval_scorecard.py</code>，各模型 10 個 deterministic episode、同一 Ant-v5 環境與指標、皆 1M steps。
-  03 legacy／04 forward-gated 溫和／05 +重 shaping／06 +tent 速度+更重平滑／07 +加重 gait 拉回踏步+放鬆平滑。指標由 contacts/velocity/action 計算，與訓練 reward 無關。
+  03 legacy／04 forward-gated 溫和／05 +重 shaping／06 +tent 速度+更重平滑／07 +加重 gait 拉回踏步／08 +加重 intra 拿回同步。指標由 contacts/velocity/action 計算，與訓練 reward 無關。
 </div>
 
 </body>
