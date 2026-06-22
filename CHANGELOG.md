@@ -14,7 +14,7 @@
 - `tools/eval_scorecard.py`：載入 SB3 模型跑 N 個 deterministic episode，用 `gait_metrics` 算 scorecard 平均±標準差（與訓練 reward 無關，可公平比較）。用法 `python -m tools.eval_scorecard <name> <model_path> [n_episodes]`
 - `05train_td3.py`：融合版（加重 `gait_weight=3.0`/`posture=1.5`/`tilt=0.8`/`smooth=0.25`），10-ep eval：anti_phase 0.326、regularity 0.355 為各版最佳，但仍抖（jerk 0.158）且超速（x_vel 1.37）
 - `06train_td3.py`：`forward_gate_shape="tent"` 修超速 + `smooth=0.40`/`ctrl=1.5` 加重平滑。10-ep eval：mean_speed 0.83（修好超速）、jerk 0.087（04 的 1/4）、uprightness 0.989 反超 03，最接近 03 的 shaped 版；代價是 anti_phase 0.212、diagonal_sync 0.552 被磨柔
-- `07train_td3.py`：在 06 基礎上「把對角踏步銳利度拉回」——`gait_weight 3.0→4.5`（anti_phase 是乘法 gate，加重直接放大對角交替）、`smooth 0.40→0.30`、`ctrl 1.5→1.2`，其餘沿用 06。訓練中
+- `07train_td3.py`：在 06 基礎上「把對角踏步銳利度拉回」——`gait_weight 3.0→4.5`（anti_phase 是乘法 gate，加重直接放大對角交替）、`smooth 0.40→0.30`、`ctrl 1.5→1.2`，其餘沿用 06。10-ep eval：**speed_error 0.100（全場最佳，連 03 都贏）、mean_speed 0.958（最準）**、anti_phase 0.212→0.267（回升超過 03），代價是 jerk 0.087→0.120、diagonal_sync 仍卡 0.544。各版量化見 `output/03_vs_04_comparison.html`（已更新為五方）
 - `output/03_vs_04_comparison.html`：03/04/05/06 四方量化比較報告（含結論與「往 03 逼」的下一步建議）
 - `gait_videos/`（RLAP 根目錄，非版控）：整理好的各版 eval 影片，按版本分子資料夾、改檔名 `<版>_step_<step>.mp4`
 
