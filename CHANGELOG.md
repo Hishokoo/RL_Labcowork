@@ -7,6 +7,23 @@
 
 ---
 
+## [2026-06-22] — 步態量化評估管線 + 04→05→06→07 reward 迭代
+
+### 新增
+- `tools/gait_train.py`：抽出共用訓練骨架（`make_env` / `GaitMonitorCallback` / `EvalScorecardCallback` / `train`），各版改成只放 `WRAP_KWARGS` 的薄設定檔。影片每 200k 錄一支、TB 永遠開（四/五方比較需各版一致）
+- `tools/eval_scorecard.py`：載入 SB3 模型跑 N 個 deterministic episode，用 `gait_metrics` 算 scorecard 平均±標準差（與訓練 reward 無關，可公平比較）。用法 `python -m tools.eval_scorecard <name> <model_path> [n_episodes]`
+- `05train_td3.py`：融合版（加重 `gait_weight=3.0`/`posture=1.5`/`tilt=0.8`/`smooth=0.25`），10-ep eval：anti_phase 0.326、regularity 0.355 為各版最佳，但仍抖（jerk 0.158）且超速（x_vel 1.37）
+- `06train_td3.py`：`forward_gate_shape="tent"` 修超速 + `smooth=0.40`/`ctrl=1.5` 加重平滑。10-ep eval：mean_speed 0.83（修好超速）、jerk 0.087（04 的 1/4）、uprightness 0.989 反超 03，最接近 03 的 shaped 版；代價是 anti_phase 0.212、diagonal_sync 0.552 被磨柔
+- `07train_td3.py`：在 06 基礎上「把對角踏步銳利度拉回」——`gait_weight 3.0→4.5`（anti_phase 是乘法 gate，加重直接放大對角交替）、`smooth 0.40→0.30`、`ctrl 1.5→1.2`，其餘沿用 06。訓練中
+- `output/03_vs_04_comparison.html`：03/04/05/06 四方量化比較報告（含結論與「往 03 逼」的下一步建議）
+- `gait_videos/`（RLAP 根目錄，非版控）：整理好的各版 eval 影片，按版本分子資料夾、改檔名 `<版>_step_<step>.mp4`
+
+### 變更
+- `tools/gait_wrapper.py`：`RealisticGaitWrapper` 新增 `forward_gate_shape`（`cap` 到目標即滿分／`tent` 太快也遞減壓超速）。預設 `cap` 維持既有行為
+- `04train_td3.py`：收斂為「會走」的溫和 `forward_gated` 設定，改成薄設定檔（套用 `tools/gait_train.train`）
+
+---
+
 ## [2026-06-22] — 04 reward 迭代到「會走」+ pc106(GB10)訓練環境 + SBX 探索
 
 ### 變更
