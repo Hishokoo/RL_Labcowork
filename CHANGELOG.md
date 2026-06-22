@@ -27,7 +27,9 @@
 - `06train_td3.py`：`forward_gate_shape="tent"` 修超速 + `smooth=0.40`/`ctrl=1.5` 加重平滑。10-ep eval：mean_speed 0.83（修好超速）、jerk 0.087（04 的 1/4）、uprightness 0.989 反超 03，最接近 03 的 shaped 版；代價是 anti_phase 0.212、diagonal_sync 0.552 被磨柔
 - `07train_td3.py`：在 06 基礎上「把對角踏步銳利度拉回」——`gait_weight 3.0→4.5`（anti_phase 是乘法 gate，加重直接放大對角交替）、`smooth 0.40→0.30`、`ctrl 1.5→1.2`，其餘沿用 06。10-ep eval：**speed_error 0.100（全場最佳，連 03 都贏）、mean_speed 0.958（最準）**、anti_phase 0.212→0.267（回升超過 03），代價是 jerk 0.087→0.120、diagonal_sync 仍卡 0.544。各版量化見 `output/03_vs_04_comparison.html`（已更新為五方）
 - `08train_td3.py`：在 07 基礎上 `intra_weight 0.25→0.35`（加重 antiphase_gated 的「同對角同步」拉 diagonal_sync）+ `smooth 0.30→0.35`。10-ep eval：**regularity 0.380 / anti_phase 0.358 / uprightness 0.993 三項總冠軍**（最像教科書 trot），但**關鍵發現：加重 intra 把 anti_phase 大幅拉起卻對 diagonal_sync 幾乎無效（0.544→0.575）**，且踏步更賣力 → speed_error 0.100→0.168、jerk/CoT 退一階
-- `output/03_vs_04_comparison.html`：03–08 六方量化比較報告（含「速度準↔節奏銳利↔平滑省力」取捨前緣與 diagonal_sync 撞牆觀察）
+- `09train_td3.py`：現有設計極限測試（smooth 0.50 / ctrl 2.0 / intra 0.40）。未跑完即中止——改走結構性路線（10）。保留設定檔作軌跡
+- `10train_td3.py`：★ 結構性換設計 ★ `gait_mode="legacy"` × `forward_gated`，假設「03 觀感來自 legacy 步態公式」。10-ep eval **反證此假設**：jerk 0.216 / CoT 4.91 / regularity 0.128 皆 shaped 版最差，diagonal_sync 僅 0.606。**真正教訓：03 的平滑/省力來自 `ctrl_weight=5.0` + additive，不是步態公式**——下一步主攻 ctrl_weight
+- `output/03_vs_04_comparison.html`：03–10 七方量化比較報告（含 10 反證實驗與「下一步主攻 ctrl」的新方向）
 - `gait_videos/`（RLAP 根目錄，非版控）：整理好的各版 eval 影片，按版本分子資料夾、改檔名 `<版>_step_<step>.mp4`
 
 ### 變更
