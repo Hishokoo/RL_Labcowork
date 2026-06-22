@@ -3,7 +3,7 @@ import argparse
 import gymnasium as gym
 from stable_baselines3 import TD3
 
-from tools.gait_wrapper import RealisticGaitWrapper
+from tools.gait_wrapper_03 import RealisticGaitWrapper
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint", type=str,

@@ -7,11 +7,16 @@
 
 ---
 
+## [2026-06-22]
+
+### 變更
+- `tools/gait_wrapper.py` 重新命名為 `tools/gait_wrapper_03.py`(Python 模組名不可以數字開頭 import,故不採 `03gait_wrapper.py`),同步修正 `03train_td3.py`、`03test_td3.py` 的 import 路徑
+
 ## [2026-06-21]
 
 ### 新增
 - `03test_td3.py`：對應 `03train_td3.py` 的推論/模擬腳本，載入 SB3 `TD3.load()` 模型並套用相同的 `RealisticGaitWrapper` 與環境參數，於 MuJoCo human 模式下視覺化步態，支援 `--checkpoint` 與 `--episodes` 參數
-- `03train_td3.py`：以 Stable-Baselines3 TD3 + `tools/gait_wrapper.py`(`RealisticGaitWrapper`)訓練步態導向的 Ant-v5,獎勵四足交替著地(trot)、限制速度上限、強懲罰大幅動作,取代預設 reward 訓出的「慣性甩動」高速移動,規格見 `markdown/03_train_td3_spec.md`
+- `03train_td3.py`：以 Stable-Baselines3 TD3 + `tools/gait_wrapper_03.py`(`RealisticGaitWrapper`)訓練步態導向的 Ant-v5,獎勵四足交替著地(trot)、限制速度上限、強懲罰大幅動作,取代預設 reward 訓出的「慣性甩動」高速移動,規格見 `markdown/03_train_td3_spec.md`
 - `01test_td3.py`:對應 `01train_td3.py` baseline 模型的推論腳本
 - `markdown/ant_v5_attractor_fix.md`:記錄 `02train_td3.py` reward shaping 的除錯過程 —— Ant-v5 預設 `healthy_reward=1.0` 讓「站著不動」變成零風險 attractor,5 次實驗驗證後改用拿掉 healthy_reward + 提高 contact_cost_weight + 還原 forward_reward_weight 解決
 - `.gitignore`:排除 `.DS_Store`、`__pycache__/`、`output/**/videos/`(評估錄影檔案過大,不納入版控)

@@ -12,7 +12,7 @@ from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-from tools.gait_wrapper import RealisticGaitWrapper
+from tools.gait_wrapper_03 import RealisticGaitWrapper
 
 # ── Hyperparameters ───────────────────────────────────────────────────────────
 ENV_NAME        = "Ant-v5"
