@@ -60,6 +60,7 @@ class RealisticGaitWrapper(gym.Wrapper):
         tilt_weight: float = 0.0,
         reward_structure: str = "additive",
         forward_gate_shape: str = "cap",
+        intra_weight: float = 0.25,
     ):
         super().__init__(env)
         self.target_speed = target_speed
@@ -83,6 +84,9 @@ class RealisticGaitWrapper(gym.Wrapper):
         self.tilt_weight = tilt_weight
         self.forward_gate_shape = forward_gate_shape
         self.reward_structure = reward_structure
+        if not 0.0 <= intra_weight <= 0.5:
+            raise ValueError(f"intra_weight 須在 [0, 0.5]（兩個 intra 項合計 ≤ 1）：{intra_weight}")
+        self.intra_weight = intra_weight
         self.prev_contacts = np.zeros(4)
         self.prev_action = np.zeros(env.action_space.shape[0], dtype=np.float64)
         self.foot_body_ids = FOOT_BODY_IDS
@@ -137,7 +141,11 @@ class RealisticGaitWrapper(gym.Wrapper):
             intra1 = 1.0 - abs(contacts[0] - contacts[3])  # FL, BR 同相
             intra2 = 1.0 - abs(contacts[1] - contacts[2])  # FR, BL 同相
             anti = gait_metrics.anti_phase(contacts)
-            r_gait = self.gait_weight * anti * (0.5 + 0.25 * intra1 + 0.25 * intra2)
+            # base + intra_weight·(intra1+intra2)，base 自動補成「滿分=1」。
+            # 提高 intra_weight（如 0.35）= 更獎勵「同對角兩腳同步」(diagonal_sync)，
+            # 整體仍被 anti 乘法閘住（站著 anti≈0 → r_gait≈0），不會復活站著 attractor。
+            base = 1.0 - 2.0 * self.intra_weight
+            r_gait = self.gait_weight * anti * (base + self.intra_weight * intra1 + self.intra_weight * intra2)
         elif self.gait_mode == "antiphase":
             # 反相為主導（0.6）：兩條對角線「一抬一踏」才給分，靜態姿勢 = 0。
             # 同步為輔（各 0.2）：維持同一對角線內兩腳協調，避免單腳亂跳。
