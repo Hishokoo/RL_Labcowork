@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>03 / 04 / 05 / 06 步態量化比較</title>
+<style>
+  :root{--g:#1f9d55;--gbg:#e3f5ea;--mid:#fff7e0;--ink:#1a2230;--mut:#6b7686;--line:#e3e7ee;}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;
+       color:var(--ink);max-width:1100px;margin:0 auto;padding:32px 20px 64px;line-height:1.6;background:#fbfcfe}
+  h1{font-size:25px;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:14px;margin-bottom:20px}
+  .verdict{background:linear-gradient(180deg,#fff,#f6f9ff);border:1px solid var(--line);border-left:4px solid #3a6ff7;
+           border-radius:12px;padding:16px 20px;margin:18px 0 26px}
+  .verdict h2{margin:0 0 8px;font-size:17px}
+  .verdict p{margin:6px 0;font-size:14.5px}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff;border:1px solid var(--line);
+        border-radius:12px;overflow:hidden}
+  th,td{padding:8px 9px;text-align:center;border-bottom:1px solid var(--line)}
+  th{background:#f3f6fb;font-weight:600;color:#33405a}
+  td.metric{text-align:left;font-weight:600}
+  td.dir{color:var(--mut);font-size:11.5px;white-space:nowrap}
+  .grp td{background:#eef2f9;text-align:left;font-weight:700;color:#33405a;font-size:12.5px}
+  .win{background:var(--gbg);color:#15643f;font-weight:700}
+  .win::after{content:" ▲";font-size:9px;color:var(--g)}
+  .best-shaped{background:var(--mid);color:#7a5b18}
+  .lose{color:#9aa3b2}
+  .std{color:var(--mut);font-size:10.5px}
+  .tie{color:#8a6d3b}
+  h2.sec{font-size:18px;margin:30px 0 10px}
+  .glossary,.legend{font-size:12.5px;color:#42506a}
+  .glossary li{margin:3px 0}
+  .legend{margin-top:6px}
+  .chip{display:inline-block;padding:1px 7px;border-radius:5px;font-size:11px;margin-right:4px}
+  .chip.w{background:var(--gbg);color:#15643f}.chip.s{background:var(--mid);color:#7a5b18}
+  .foot{color:var(--mut);font-size:12px;margin-top:26px;border-top:1px solid var(--line);padding-top:14px}
+  code{background:#eef1f6;padding:1px 6px;border-radius:5px;font-size:12px}
+  .arc{font-size:14.5px;background:#f6f9ff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0}
+</style>
+</head>
+<body>
+
+<h1>步態量化比較 — 03 / 04 / 05 / 06</h1>
+<div class="sub">各載入 <code>final_model</code>（皆 1M steps）、跑 10 個 deterministic episode、用同一套
+<code>tools/gait_metrics</code> 量測（與訓練 reward 無關，可公平比較）。數值＝平均（小字＝標準差）。
+<span class="legend"><span class="chip w">▲ 該列總冠軍</span><span class="chip s">shaped(04/05/06) 最佳</span></span></div>
+
+<div class="verdict">
+  <h2>結論：06 是目前最接近 03 的版本，但 03 在 raw 平滑/省力仍小贏</h2>
+  <p class="arc"><b>調參軌跡：</b>04（抖 0.33、超速 1.29）→ 05（節奏變好但仍抖 0.16、超速 1.37）→ <b>06（修超速 0.83、抖砍到 0.087、最直立）</b>。一版比一版接近 03。</p>
+  <p>• <b>06 修好超速</b>：tent 速度 reward 把 04/05 的 1.3+ 壓回 <b>0.83</b>，speed_error 0.219（shaped 版最佳，僅輸 03 的 0.140）。</p>
+  <p>• <b>06 平滑大進</b>：jerk 0.329(04)→0.158(05)→<b>0.087(06)</b>，已是 03(0.028) 的同量級而非數倍；CoT 也最低（shaped 版）。</p>
+  <p>• <b>06 在 uprightness 反超 03</b>（0.989 vs 0.986），regularity（0.344）也比 03（0.239）規律。</p>
+  <p>• <b>代價</b>：06 重平滑把腳步「磨柔」了 → 對角交替 anti_phase（0.21）與對角同步（0.55）回落，這兩項輸 05/03。</p>
+  <p style="color:var(--mut);font-size:13.5px">一句話：<b>06 ≈ 把 04/05 的缺點（抖、超速）幾乎補平到 03 水準，代價是步態的「對角銳利度」變柔。</b>
+  03 仍在 jerk/CoT/diagonal_sync 領先；要不要再往 03 逼，得在「更平滑」與「保住對角銳利」之間取捨。</p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align:left">指標</th><th>方向</th>
+      <th>03<br><span class="std">legacy</span></th>
+      <th>04<br><span class="std">溫和</span></th>
+      <th>05<br><span class="std">融合</span></th>
+      <th>06<br><span class="std">tent+平滑</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="grp"><td colspan="6">移動 / 速度控制（目標速度 = 1.0）</td></tr>
+    <tr>
+      <td class="metric">mean_speed 平均速度</td><td class="dir">越接近 1.0</td>
+      <td class="win">0.94</td><td class="lose">1.29</td><td class="lose">1.37</td>
+      <td class="best-shaped">0.83<br><span class="std">不再超速</span></td>
+    </tr>
+    <tr>
+      <td class="metric">speed_error 速度誤差</td><td class="dir">越低越好</td>
+      <td class="win">0.140</td><td class="lose">0.328</td><td class="lose">0.397</td>
+      <td class="best-shaped">0.219</td>
+    </tr>
+    <tr>
+      <td class="metric">episode_length 存活步數</td><td class="dir">越高越好</td>
+      <td class="tie">1000</td><td class="tie">1000</td><td class="tie">1000</td><td class="tie">1000</td>
+    </tr>
+
+    <tr class="grp"><td colspan="6">步態品質（節奏 / 協調）</td></tr>
+    <tr>
+      <td class="metric">contact_regularity 週期性</td><td class="dir">越高越好</td>
+      <td class="lose">0.239</td><td>0.334</td><td class="win">0.355</td><td>0.344</td>
+    </tr>
+    <tr>
+      <td class="metric">anti_phase 對角交替</td><td class="dir">越高越好</td>
+      <td class="lose">0.209</td><td>0.321</td><td class="win">0.326</td><td class="lose">0.212</td>
+    </tr>
+    <tr>
+      <td class="metric">diagonal_sync 對角同步</td><td class="dir">越高越好</td>
+      <td class="win">0.712</td><td>0.601</td><td>0.677</td><td class="lose">0.552</td>
+    </tr>
+
+    <tr class="grp"><td colspan="6">平滑 / 效率 / 姿態（觀感主導項）</td></tr>
+    <tr>
+      <td class="metric">action_jerk 動作抖動</td><td class="dir">越低越好</td>
+      <td class="win">0.028</td><td class="lose">0.329</td><td>0.158</td>
+      <td class="best-shaped">0.087<br><span class="std">04 的 1/4</span></td>
+    </tr>
+    <tr>
+      <td class="metric">transport_cost 能耗/距離</td><td class="dir">越低越好</td>
+      <td class="win">1.02</td><td class="lose">5.56</td><td>2.85</td>
+      <td class="best-shaped">2.62</td>
+    </tr>
+    <tr>
+      <td class="metric">uprightness 軀幹直立度</td><td class="dir">越高越好</td>
+      <td>0.986</td><td>0.982</td><td class="lose">0.977</td><td class="win">0.989</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 class="sec">怎麼選</h2>
+<ul style="font-size:14.5px">
+  <li><b>要最自然俐落、最省力（觀感最佳）</b> → <b>03</b>。它 jerk/CoT/對角同步仍最好。</li>
+  <li><b>要速度準 + 平滑 + 直立 + 有週期節奏的綜合體</b> → <b>06</b>。最接近 03 的 shaped 版，且 uprightness/regularity 反超 03。</li>
+  <li><b>要最明顯的對角「交替踏步」節奏</b> → <b>05</b>（anti_phase/regularity 最高，但抖、超速）。</li>
+  <li>04 已被 05/06 全面取代，僅留作對照。</li>
+</ul>
+
+<h2 class="sec">若要再往 03 逼（下一步可調）</h2>
+<ol style="font-size:14.5px">
+  <li>06 速度略低（0.83）：tent 中心右移或微降 ctrl，把速度拉回 1.0。</li>
+  <li>06 對角銳利度被磨柔：smooth 別再加，改加重 <code>gait_weight</code>（forward-gated 下安全）把 anti_phase 拉回。</li>
+  <li>jerk 要再逼近 03 的 0.028：smooth 0.4→0.6，但需驗證不犧牲 anti_phase。</li>
+</ol>
+
+<h2 class="sec">指標定義</h2>
+<ul class="glossary">
+  <li><b>mean_speed / speed_error</b>：前進速度平均、與目標 1.0 的平均絕對誤差。</li>
+  <li><b>contact_regularity</b>：四腳接觸序列自相關主峰（0–1），越高越週期。</li>
+  <li><b>anti_phase</b>：兩條對角線「一抬一踏」程度。 / <b>diagonal_sync</b>：同對角兩腳同步度（站著也偏高）。</li>
+  <li><b>action_jerk</b>：相鄰動作差平方和平均（抽搐）。 / <b>transport_cost</b>：Σ‖action‖²÷距離（省力度）。</li>
+  <li><b>uprightness</b>：軀幹本體 z 軸的世界垂直分量，1＝完全直立。</li>
+</ul>
+
+<div class="foot">
+  方法：<code>tools/eval_scorecard.py</code>，各模型 10 個 deterministic episode、同一 Ant-v5 環境與指標、皆 1M steps。
+  03 legacy／04 forward-gated 溫和／05 +重 shaping／06 +tent 速度+更重平滑。指標由 contacts/velocity/action 計算，與訓練 reward 無關。
+</div>
+
+</body>
+</html>

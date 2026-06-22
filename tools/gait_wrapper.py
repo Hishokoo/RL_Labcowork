@@ -59,6 +59,7 @@ class RealisticGaitWrapper(gym.Wrapper):
         smooth_weight: float = 0.0,
         tilt_weight: float = 0.0,
         reward_structure: str = "additive",
+        forward_gate_shape: str = "cap",
     ):
         super().__init__(env)
         self.target_speed = target_speed
@@ -73,11 +74,14 @@ class RealisticGaitWrapper(gym.Wrapper):
             raise ValueError(f"未知的 forward_mode：{forward_mode}（可用 'deviation' / 'progress'）")
         if reward_structure not in ("additive", "forward_gated"):
             raise ValueError(f"未知的 reward_structure：{reward_structure}（可用 'additive' / 'forward_gated'）")
+        if forward_gate_shape not in ("cap", "tent"):
+            raise ValueError(f"未知的 forward_gate_shape：{forward_gate_shape}（可用 'cap' / 'tent'）")
         self.gait_mode = gait_mode
         self.forward_mode = forward_mode
         self.forward_weight = forward_weight
         self.smooth_weight = smooth_weight
         self.tilt_weight = tilt_weight
+        self.forward_gate_shape = forward_gate_shape
         self.reward_structure = reward_structure
         self.prev_contacts = np.zeros(4)
         self.prev_action = np.zeros(env.action_space.shape[0], dtype=np.float64)
@@ -167,7 +171,15 @@ class RealisticGaitWrapper(gym.Wrapper):
             # 不前進 → forward_progress≈0 → 連步態 bonus 都歸零,站著/原地踏步都拿不到正分
             # （修正 04 站著、05 原地踏步的鑽洞）。懲罰（ctrl/smooth/tilt/posture）仍照算。
             # r_gait 在此當品質乘子（搭 antiphase_gated 時 ∈[0, gait_weight]）。
-            forward_progress = max(0.0, min(x_vel, self.target_speed))
+            # forward_gate_shape 決定速度形狀：
+            #   "cap" ：max(0, min(x_vel, target))，到目標即滿分、超過不再加分也不罰（會超速）。
+            #   "tent"：target·max(0, 1−|x_vel−target|/target)，恰在目標滿分、太慢或太快都遞減、
+            #           但 ≥0（不為負 → 不摔死）。用來壓住 05 的超速（x_vel 1.37 → 拉回目標 1.0）。
+            if self.forward_gate_shape == "tent":
+                forward_progress = self.target_speed * max(
+                    0.0, 1.0 - abs(x_vel - self.target_speed) / self.target_speed)
+            else:
+                forward_progress = max(0.0, min(x_vel, self.target_speed))
             gait_contrib = forward_progress * r_gait
             total = forward_progress + gait_contrib + r_alive + r_ctrl + r_smooth + r_tilt + r_posture
             r_forward = forward_progress   # 記錄用：實際前進量
