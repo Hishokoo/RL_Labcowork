@@ -27,6 +27,14 @@
 - `03test_td3.py`：對應 `03train_td3.py` 的推論/模擬腳本，載入 SB3 `TD3.load()` 模型並套用相同的 `RealisticGaitWrapper` 與環境參數，於 MuJoCo human 模式下視覺化步態，支援 `--checkpoint` 與 `--episodes` 參數
 - `03train_td3.py`：以 Stable-Baselines3 TD3 + `tools/gait_wrapper_03.py`(`RealisticGaitWrapper`)訓練步態導向的 Ant-v5,獎勵四足交替著地(trot)、限制速度上限、強懲罰大幅動作,取代預設 reward 訓出的「慣性甩動」高速移動,規格見 `markdown/03_train_td3_spec.md`
 
+## [2026-06-23] — multi-seed 穩健性：progress 線（07）跨 seed 穩定
+
+### 新增
+- `14`（= 07 加 `SEED` env override，多 seed 驗證 progress 線）：seed 1 @1M **複現 seed 0**——ep_len 1000、mean_speed 0.947（seed0=0.958）、jerk 0.143、CoT 3.01、diagonal_sync 0.588、stationary 0.003，幾乎逐項一致。**對比 03 seed1 是 15 步 fast-fall → progress 線跨 seed 穩定（初步坐實，seed 2 待補）。** 結果拉回 `output/14multiseed/seed_1/`、影片 `gait_videos/14_seed1/`
+- `15`（小修版 03：ctrl 漸進排程）：seed 1 @400k **fast-fall 修好**——ep_len 1000（原版 03 seed1=15 步）、stationary 0.071，ctrl 漸進排程成功擋掉秒摔；但 mean_speed 0.574 未達 ≥0.7 go/no-go 閘（300k 後 ctrl 才回 5.0、壓著速度），「修好但慢」，seed 2 待補
+
+---
+
 ## [2026-06-22] — 步態量化評估管線 + 04→05→06→07 reward 迭代
 
 ### 新增

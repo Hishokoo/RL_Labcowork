@@ -1,3 +1,4 @@
 .DS_Store
 __pycache__/
 output/**/videos/
+output/**/replay_buffer*   # SB3 replay buffer（~數百 MB），留 pc106 供續訓用，不入版控
