@@ -42,7 +42,9 @@
 
 ### 新增
 - `14`（= 07 加 `SEED` env override，多 seed 驗證 progress 線）：seed 1 @1M **複現 seed 0**——ep_len 1000、mean_speed 0.947（seed0=0.958）、jerk 0.143、CoT 3.01、diagonal_sync 0.588、stationary 0.003，幾乎逐項一致。**對比 03 seed1 是 15 步 fast-fall → progress 線跨 seed 穩定（初步坐實，seed 2 待補）。** 結果拉回 `output/14multiseed/seed_1/`、影片 `gait_videos/14_seed1/`
-- `15`（小修版 03：ctrl 漸進排程）：seed 1 @400k **fast-fall 修好**——ep_len 1000（原版 03 seed1=15 步）、stationary 0.071，ctrl 漸進排程成功擋掉秒摔；但 mean_speed 0.574 未達 ≥0.7 go/no-go 閘（300k 後 ctrl 才回 5.0、壓著速度），「修好但慢」，seed 2 待補
+- `15`（小修版 03：ctrl 漸進排程）：seed 1/2 @400k **fast-fall 跨 seed 一致修好**——ep_len 1000（原版 03=15 步秒摔）、stationary 0.03–0.07，但速度被 ctrl=5 壓在 ~0.58；seed1 續 600k speed 仍 0.61 且變不穩 → 加 forward 拉力
+- `15-A`（15 + `FORWARD_WEIGHT` env）：forward_weight 1.2 → seed1 1M speed 0.764（補洞中），再 resume → **forward_weight 1.8 @eff-1.4M 解決速度**：**mean_speed 0.913 / speed_error 0.122（勝 03 的 0.140）/ jerk 0.052 / CoT 1.62 / diagonal_sync 0.744（勝 03）/ upright 0.991 / ep_len 1000 / stationary 0.002**。加速拉力反而讓 jerk 0.081→0.052、CoT 2.19→1.62（走更順更省力）。**deviation 線目前最佳、保留 03 自然感基因，下一步跑 seed2 驗證跨 seed 穩健性**
+- `tools/gait_train.resume()`：載入 model + replay buffer 續訓同 reward（免重跑）。15-A 多次續訓（400k→1M→1.4M）全靠此機制，buffer 從 39 萬/99 萬/100 萬次更新接續
 
 ---
 
