@@ -25,7 +25,8 @@ WRAP_KWARGS = dict(
     ctrl_weight=5.0,                          # 排程的終值/asymptote（300k 後）
     gait_weight=2.0, posture_weight=2.0, alive_weight=1.0,
     contact_threshold=1.0,
-    gait_mode="legacy", forward_mode="deviation", forward_weight=1.0,
+    gait_mode="legacy", forward_mode="deviation",
+    forward_weight=float(os.environ.get("FORWARD_WEIGHT", 1.0)),  # 15-A：=1.2 加速度拉力（其餘同 15）
     smooth_weight=0.0, tilt_weight=0.0, reward_structure="additive",
     ctrl_schedule=(100_000, 300_000, 0.5, 5.0),   # ★ 唯一變因：早期放鬆、300k 回到 03 的 5.0
 )
