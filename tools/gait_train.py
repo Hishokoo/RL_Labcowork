@@ -223,3 +223,44 @@ def finetune(wrap_kwargs: dict, output_dir: str, init_model_path: str, *,
     model.save(f"{output_dir}/final_model")
     model.save_replay_buffer(f"{output_dir}/replay_buffer")  # 存 buffer 以利日後續訓免重跑
     print("Fine-tune complete.")
+
+
+def resume(wrap_kwargs: dict, output_dir: str, init_model_path: str, replay_buffer_path: str, *,
+           target_speed: float = 1.0, additional_timesteps: int = 600_000,
+           learning_rate: float = 3e-4, eval_interval: int = 50_000,
+           video_interval: int = 200_000, checkpoint_freq: int = 100_000, seed: int = 0) -> None:
+    """載入既有 model + replay buffer，用**同一 reward**續訓更多步（免重跑）。
+
+    與 finetune() 的差別：finetune 清空 buffer + 換 reward（curriculum）；
+    resume 載入舊 buffer + 同 reward（單純訓更多步），等同「沒中斷地繼續訓練」。
+    注意：若原訓練用 ctrl_schedule，resume 的 wrap_kwargs 應換成排程終點的固定 ctrl_weight
+    （wrapper 的 _gstep 會從 0 起算，無法接續排程相位）。
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    train_env = DummyVecEnv([lambda: make_env(wrap_kwargs, seed=seed)])
+    model = TD3.load(
+        init_model_path, env=train_env,
+        custom_objects={"learning_rate": learning_rate, "learning_starts": 0},
+        tensorboard_log=f"{output_dir}/tb", verbose=1, seed=seed,
+    )
+    model.load_replay_buffer(replay_buffer_path)  # ★ 載入舊 buffer 接續，不重跑
+    print(f"[resume] loaded replay buffer, size={model.replay_buffer.size()}")
+
+    checkpoint_cb = CheckpointCallback(
+        save_freq=max(checkpoint_freq, 1),
+        save_path=f"{output_dir}/checkpoints", name_prefix="td3_gait",
+    )
+    model.learn(
+        total_timesteps=additional_timesteps,
+        callback=[
+            GaitMonitorCallback(),
+            EvalScorecardCallback(wrap_kwargs, target_speed, output_dir,
+                                  eval_interval, video_interval, seed, verbose=1),
+            checkpoint_cb,
+        ],
+        progress_bar=True,
+        reset_num_timesteps=True,
+    )
+    model.save(f"{output_dir}/final_model")
+    model.save_replay_buffer(f"{output_dir}/replay_buffer")
+    print("Resume complete.")

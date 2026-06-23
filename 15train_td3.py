@@ -34,14 +34,33 @@ WRAP_KWARGS = dict(
 
 
 if __name__ == "__main__":
-    train(
-        WRAP_KWARGS,
-        output_dir=os.environ.get("OUTPUT_DIR", "output/15train_td3"),
-        target_speed=WRAP_KWARGS["target_speed"],
-        max_timesteps=int(os.environ.get("MAX_TIMESTEPS", 1_000_000)),
-        eval_interval=int(os.environ.get("EVAL_INTERVAL", 50_000)),
-        video_interval=int(os.environ.get("VIDEO_INTERVAL", 200_000)),
-        checkpoint_freq=int(os.environ.get("CHECKPOINT_FREQ", 100_000)),
-        n_envs=int(os.environ.get("N_ENVS", 1)),
-        seed=int(os.environ.get("SEED", 0)),
-    )
+    SEED = int(os.environ.get("SEED", 0))
+    OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "output/15train_td3")
+    MAX_TIMESTEPS = int(os.environ.get("MAX_TIMESTEPS", 1_000_000))
+    INIT_MODEL = os.environ.get("INIT_MODEL", "")
+
+    if INIT_MODEL:
+        # resume 模式：載入既有 model + replay buffer 續訓（免重跑）。ctrl 已過排程終點（300k），
+        # 故移除 schedule、固定 ctrl_weight=5.0（_gstep 從 0 起算無法接續排程相位）。MAX_TIMESTEPS=要續的步數。
+        from tools.gait_train import resume
+        RESUME_KWARGS = dict(WRAP_KWARGS)
+        RESUME_KWARGS.pop("ctrl_schedule", None)
+        RESUME_KWARGS["ctrl_weight"] = 5.0
+        resume(
+            RESUME_KWARGS, output_dir=OUTPUT_DIR,
+            init_model_path=INIT_MODEL,
+            replay_buffer_path=os.environ.get("REPLAY_BUFFER", ""),
+            target_speed=WRAP_KWARGS["target_speed"],
+            additional_timesteps=MAX_TIMESTEPS, seed=SEED,
+        )
+    else:
+        train(
+            WRAP_KWARGS, output_dir=OUTPUT_DIR,
+            target_speed=WRAP_KWARGS["target_speed"],
+            max_timesteps=MAX_TIMESTEPS,
+            eval_interval=int(os.environ.get("EVAL_INTERVAL", 50_000)),
+            video_interval=int(os.environ.get("VIDEO_INTERVAL", 200_000)),
+            checkpoint_freq=int(os.environ.get("CHECKPOINT_FREQ", 100_000)),
+            n_envs=int(os.environ.get("N_ENVS", 1)),
+            seed=SEED,
+        )
