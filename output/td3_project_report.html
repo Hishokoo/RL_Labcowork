@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="RLAP TD3 + MuJoCo Ant-v5 實驗演進、模型架構、reward 設計與量化結果報告">
+  <title>RLAP — TD3 四足步態實驗全紀錄</title>
+  <style>
+    :root {
+      --ink: #17201d;
+      --muted: #62706a;
+      --paper: #f3f0e8;
+      --panel: #fffdf8;
+      --panel-2: #ebe6da;
+      --line: #d6d0c2;
+      --deep: #15201d;
+      --deep-2: #202b27;
+      --sand: #c49a68;
+      --sand-light: #e8cfad;
+      --mint: #5bb69a;
+      --mint-light: #d7eee6;
+      --red: #c9665b;
+      --red-light: #f4ddd8;
+      --amber: #c28a33;
+      --amber-light: #f4e6c8;
+      --blue: #5e86a6;
+      --shadow: 0 18px 50px rgba(26, 31, 28, .11);
+      --radius-sm: 6px;
+      --radius: 14px;
+      --radius-lg: 24px;
+      --content: 1180px;
+      --ease: cubic-bezier(.22, 1, .36, 1);
+    }
+
+    html[data-theme="dark"] {
+      --ink: #edf2ee;
+      --muted: #a7b2ac;
+      --paper: #111714;
+      --panel: #19211e;
+      --panel-2: #222c28;
+      --line: #33403b;
+      --deep: #0b100e;
+      --deep-2: #141c19;
+      --sand-light: #3b3024;
+      --mint-light: #17382f;
+      --red-light: #3f2422;
+      --amber-light: #3d301a;
+      --shadow: 0 22px 65px rgba(0, 0, 0, .32);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Avenir Next", "Noto Sans TC", "PingFang TC", sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      text-wrap: pretty;
+      transition: background .25s ease, color .25s ease;
+    }
+    button, a { font: inherit; }
+    a { color: inherit; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
+    code, .mono {
+      font-family: "SFMono-Regular", "Cascadia Code", "Liberation Mono", monospace;
+      font-size: .92em;
+    }
+    ::selection { background: var(--mint); color: #08100d; }
+
+    .shell { min-height: 100vh; }
+    .side {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: 265px;
+      padding: 28px 22px;
+      color: #eaf0ec;
+      background: var(--deep);
+      border-right: 1px solid rgba(255,255,255,.08);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+    }
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 34px;
+      text-decoration: none;
+    }
+    .brand-mark {
+      width: 40px;
+      aspect-ratio: 1;
+      border: 1px solid rgba(255,255,255,.4);
+      display: grid;
+      place-items: center;
+      transform: rotate(45deg);
+    }
+    .brand-mark span { transform: rotate(-45deg); font-weight: 800; letter-spacing: -.06em; }
+    .brand strong { display: block; letter-spacing: .16em; font-size: 14px; }
+    .brand small { display: block; color: #9faea7; font-size: 11px; letter-spacing: .06em; }
+    .side-label { color: #71817a; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; margin: 0 10px 8px; }
+    .side nav { display: grid; gap: 4px; }
+    .side nav a {
+      color: #aebbb5;
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      transition: color .18s ease, background .18s ease, transform .18s ease;
+    }
+    .side nav a:hover, .side nav a.active { color: #fff; background: rgba(255,255,255,.08); transform: translateX(3px); }
+    .side-foot { margin-top: auto; color: #829088; font-size: 11px; }
+    .side-foot strong { color: var(--mint); font-weight: 700; }
+
+    main { margin-left: 265px; min-width: 0; }
+    .hero {
+      min-height: 720px;
+      padding: 76px clamp(30px, 6vw, 95px) 64px;
+      color: #edf2ee;
+      background: var(--deep);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      width: min(52vw, 780px);
+      aspect-ratio: 1;
+      right: -16%;
+      top: -18%;
+      border: 1px solid rgba(196,154,104,.25);
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 90px rgba(196,154,104,.025), inset 0 0 0 180px rgba(196,154,104,.018);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 95px;
+      background: linear-gradient(168deg, transparent 49%, var(--paper) 50%);
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; z-index: 1; width: min(100%, 1120px); }
+    .eyebrow { display: flex; align-items: center; gap: 10px; color: var(--sand); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; }
+    .eyebrow::before { content: ""; width: 38px; height: 1px; background: currentColor; }
+    h1 {
+      margin: 26px 0 22px;
+      max-width: 950px;
+      font-family: "Avenir Next Condensed", "Noto Sans TC", sans-serif;
+      font-size: clamp(54px, 7vw, 104px);
+      line-height: .96;
+      letter-spacing: -.055em;
+      font-weight: 780;
+    }
+    .hero-lead { max-width: 740px; color: #aebbb5; font-size: clamp(17px, 1.6vw, 22px); line-height: 1.65; }
+    .hero-lead strong { color: #fff; }
+    .hero-actions { margin-top: 34px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      color: #f7faf8;
+      background: transparent;
+      cursor: pointer;
+      transition: transform .18s var(--ease), background .18s ease, border .18s ease;
+    }
+    .btn:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.55); background: rgba(255,255,255,.06); }
+    .btn.primary { background: var(--mint); border-color: var(--mint); color: #07110d; font-weight: 750; }
+    .hero-stats { margin-top: 62px; display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); max-width: 920px; border-top: 1px solid rgba(255,255,255,.12); }
+    .hero-stat { padding: 22px 18px 8px 0; }
+    .hero-stat b { display: block; font-size: 28px; letter-spacing: -.04em; }
+    .hero-stat span { color: #8e9e96; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+
+    .section { padding: 96px clamp(24px, 5vw, 78px); border-bottom: 1px solid var(--line); }
+    .section-inner { max-width: var(--content); margin: 0 auto; }
+    .section-kicker { color: var(--mint); text-transform: uppercase; letter-spacing: .18em; font-size: 11px; font-weight: 750; }
+    h2 { margin: 12px 0 18px; font-size: clamp(34px, 4.2vw, 60px); line-height: 1.08; letter-spacing: -.045em; }
+    h3 { margin: 0 0 12px; font-size: 22px; line-height: 1.25; letter-spacing: -.02em; }
+    .section-intro { max-width: 780px; color: var(--muted); font-size: 18px; margin-bottom: 42px; }
+
+    .champion {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 0;
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+    .champion-copy { padding: clamp(28px, 4vw, 54px); }
+    .status-line { display: flex; align-items: center; gap: 9px; color: var(--mint); text-transform: uppercase; letter-spacing: .14em; font-size: 11px; font-weight: 800; }
+    .status-dot { width: 8px; height: 8px; background: currentColor; border-radius: 50%; box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 15%, transparent); }
+    .champion h3 { font-size: clamp(32px, 4vw, 52px); margin: 18px 0; }
+    .champion p { color: var(--muted); max-width: 650px; }
+    .constraint-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .constraint { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
+    .constraint.pass { color: var(--mint); border-color: color-mix(in srgb, var(--mint) 45%, var(--line)); background: var(--mint-light); }
+    .champion-metrics { background: var(--deep-2); color: #eef3f0; display: grid; grid-template-columns: 1fr 1fr; }
+    .metric-tile { padding: 26px; border: solid rgba(255,255,255,.1); border-width: 0 0 1px 1px; }
+    .metric-tile b { display: block; font-size: 30px; letter-spacing: -.05em; }
+    .metric-tile span { color: #8fa098; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+
+    .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .arch-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; }
+    .arch-card .phase { color: var(--sand); font-size: 11px; text-transform: uppercase; letter-spacing: .16em; font-weight: 750; }
+    .network { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-items: center; margin: 24px 0; }
+    .node { min-height: 76px; display: grid; place-items: center; text-align: center; padding: 9px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius-sm); position: relative; font-size: 12px; }
+    .node:not(:last-child)::after { content: "→"; position: absolute; right: -9px; color: var(--muted); z-index: 2; }
+    .node strong { display: block; font-size: 17px; color: var(--ink); }
+    .twins { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .twins div { padding: 9px; text-align: center; background: var(--deep); color: #dce5e0; border-radius: var(--radius-sm); font-size: 12px; }
+    .mechanisms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+    .mechanism { padding: 16px; background: var(--panel-2); border-radius: var(--radius-sm); }
+    .mechanism b { display: block; font-size: 13px; }
+    .mechanism small { color: var(--muted); }
+
+    .formula-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .formula-card { padding: 24px; border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); }
+    .formula-card .formula { padding: 15px; margin: 18px 0; background: var(--deep); color: #dce8e2; border-radius: var(--radius-sm); overflow-x: auto; white-space: nowrap; }
+    .formula-card p { color: var(--muted); font-size: 14px; }
+    .formula-card.highlight { border-color: var(--mint); background: var(--mint-light); }
+
+    .pipeline { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: stretch; }
+    .stage { padding: 26px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+    .stage .num { color: var(--sand); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+    .stage strong { display: block; font-size: 24px; margin: 6px 0; }
+    .stage p { color: var(--muted); font-size: 14px; }
+    .pipeline-arrow { display: grid; place-items: center; color: var(--mint); font-size: 24px; }
+    .total-training { margin-top: 20px; padding: 16px 20px; border: 1px dashed var(--mint); color: var(--muted); border-radius: var(--radius-sm); }
+    .total-training b { color: var(--ink); }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .filter-btn { border: 1px solid var(--line); background: var(--panel); color: var(--muted); padding: 8px 13px; border-radius: 999px; cursor: pointer; transition: .18s ease; }
+    .filter-btn:hover, .filter-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .timeline { position: relative; display: grid; gap: 16px; }
+    .timeline::before { content: ""; position: absolute; left: 35px; top: 0; bottom: 0; width: 1px; background: var(--line); }
+    .version-card { display: grid; grid-template-columns: 72px 1fr; gap: 18px; position: relative; transition: opacity .2s ease, transform .2s ease; }
+    .version-card[hidden] { display: none; }
+    .version-num { width: 70px; height: 70px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper); display: grid; place-items: center; font-size: 20px; font-weight: 800; z-index: 1; }
+    .version-body { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+    .version-top { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
+    .version-top h3 { margin-bottom: 4px; }
+    .version-top p { color: var(--muted); margin: 0; }
+    .version-status { flex: none; padding: 4px 8px; border-radius: 999px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+    .version-status.good { background: var(--mint-light); color: var(--mint); }
+    .version-status.warn { background: var(--amber-light); color: var(--amber); }
+    .version-status.fail { background: var(--red-light); color: var(--red); }
+    .version-status.neutral { background: var(--panel-2); color: var(--muted); }
+    .version-result { margin-top: 17px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); }
+    .version-result strong { color: var(--ink); }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+    .chip { font-family: "SFMono-Regular", monospace; font-size: 11px; padding: 4px 7px; background: var(--panel-2); border-radius: 4px; color: var(--muted); }
+
+    .table-wrap { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+    table { width: 100%; min-width: 980px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    th, td { padding: 13px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--panel); z-index: 1; }
+    th { color: var(--muted); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; cursor: pointer; user-select: none; }
+    th:hover { color: var(--ink); }
+    td { font-size: 13px; }
+    tr:last-child td { border-bottom: 0; }
+    tr.champion-row td { background: var(--mint-light); font-weight: 720; }
+    tr.champion-row td:first-child { background: var(--mint-light); }
+    .dash { color: var(--muted); opacity: .55; }
+    .table-note { color: var(--muted); font-size: 12px; margin-top: 12px; }
+
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 30px; }
+    .compare-card { padding: 25px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+    .metric-bar { margin: 18px 0; }
+    .metric-bar-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .track { height: 7px; background: var(--panel-2); overflow: hidden; border-radius: 999px; }
+    .fill { height: 100%; width: var(--w); background: var(--sand); border-radius: inherit; }
+    .compare-card.champ .fill { background: var(--mint); }
+
+    .lessons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .lesson { padding: 24px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+    .lesson b { display: block; margin-bottom: 8px; }
+    .lesson p { color: var(--muted); margin: 0; font-size: 14px; }
+    .lesson.fail { background: var(--red-light); border-color: color-mix(in srgb, var(--red) 40%, var(--line)); }
+
+    .artifacts { display: grid; grid-template-columns: 1.1fr .9fr; gap: 24px; }
+    .video-shell { background: #080c0a; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    video { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+    .artifact-links { display: grid; gap: 10px; }
+    .artifact-link { display: flex; justify-content: space-between; gap: 20px; padding: 16px; border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius-sm); text-decoration: none; transition: transform .18s var(--ease), border .18s ease; }
+    .artifact-link:hover { transform: translateX(4px); border-color: var(--mint); }
+    .artifact-link span { color: var(--muted); font-size: 12px; }
+
+    .method-note { padding: 20px; color: var(--muted); background: var(--panel-2); border-radius: var(--radius-sm); font-size: 13px; }
+    footer { margin-left: 265px; padding: 36px clamp(24px, 5vw, 78px); background: var(--deep); color: #819088; font-size: 12px; }
+    footer .footer-inner { max-width: var(--content); margin: auto; display: flex; justify-content: space-between; gap: 20px; }
+
+    .floating-tools { position: fixed; right: 20px; bottom: 20px; z-index: 40; display: flex; align-items: flex-end; gap: 8px; }
+    .tool-toggle { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--ink); box-shadow: var(--shadow); cursor: pointer; }
+    .tweaks { width: 230px; padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); display: none; }
+    .tweaks.open { display: block; animation: reveal .22s var(--ease); }
+    .tweaks h3 { font-size: 14px; margin-bottom: 14px; }
+    .tweak-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; color: var(--muted); font-size: 12px; }
+    .switch { border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
+    body.compact .version-body { padding: 16px; }
+    body.compact .version-result { margin-top: 10px; padding-top: 10px; }
+    body.hide-formulas .formula-grid { display: none; }
+
+    @keyframes reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 1080px) {
+      .side { width: 210px; }
+      main, footer { margin-left: 210px; }
+      .champion, .artifacts { grid-template-columns: 1fr; }
+      .formula-grid { grid-template-columns: 1fr; }
+      .arch-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 780px) {
+      .side { position: static; width: auto; height: auto; padding: 18px 20px; flex-direction: row; align-items: center; overflow-x: auto; }
+      .brand { margin: 0 14px 0 0; flex: none; }
+      .brand-mark { width: 32px; }
+      .brand small, .side-label, .side-foot { display: none; }
+      .side nav { display: flex; white-space: nowrap; }
+      main, footer { margin-left: 0; }
+      .hero { min-height: auto; padding: 64px 24px 95px; }
+      .hero-stats { grid-template-columns: 1fr 1fr; }
+      .section { padding: 72px 20px; }
+      .mechanisms, .lessons { grid-template-columns: 1fr; }
+      .pipeline { grid-template-columns: 1fr; }
+      .pipeline-arrow { transform: rotate(90deg); min-height: 28px; }
+      .compare { grid-template-columns: 1fr; }
+      footer .footer-inner { flex-direction: column; }
+    }
+    @media (max-width: 520px) {
+      .champion-metrics { grid-template-columns: 1fr; }
+      .hero-stats { grid-template-columns: 1fr 1fr; }
+      .network { grid-template-columns: 1fr 1fr; }
+      .node::after { display: none; }
+      .version-card { grid-template-columns: 48px 1fr; gap: 10px; }
+      .version-num { width: 46px; height: 46px; font-size: 15px; }
+      .timeline::before { left: 23px; }
+      .version-top { flex-direction: column; gap: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+    }
+    @media print {
+      html[data-theme="dark"] { --ink:#17201d; --muted:#62706a; --paper:#fff; --panel:#fff; --panel-2:#f1eee7; --line:#d6d0c2; }
+      .side, .floating-tools, .hero-actions, video { display: none !important; }
+      main, footer { margin-left: 0; }
+      .hero { min-height: auto; color: #17201d; background: #fff; padding: 40px; }
+      .hero::before, .hero::after { display: none; }
+      .hero-lead, .hero-stat span { color: #62706a; }
+      .section { padding: 42px 32px; break-inside: avoid; }
+      .version-card, .arch-card, .formula-card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="side">
+      <a class="brand" href="#top" aria-label="回到報告首頁">
+        <span class="brand-mark"><span>R</span></span>
+        <span><strong>RLAP</strong><small>TD3 GAIT LAB</small></span>
+      </a>
+      <p class="side-label">Report index</p>
+      <nav aria-label="報告章節">
+        <a href="#summary">結論摘要</a>
+        <a href="#architecture">模型架構</a>
+        <a href="#reward">Reward 設計</a>
+        <a href="#curriculum">最終 Pipeline</a>
+        <a href="#versions">版本演進</a>
+        <a href="#results">量化結果</a>
+        <a href="#lessons">關鍵教訓</a>
+        <a href="#artifacts">模型與影片</a>
+      </nav>
+      <div class="side-foot">Current champion<br><strong>12 @ 25k</strong></div>
+    </aside>
+
+    <main id="top">
+      <header class="hero">
+        <div class="hero-inner">
+          <div class="eyebrow">TD3 · MuJoCo Ant-v5 · 2026</div>
+          <h1>從會走，<br>到走得漂亮。</h1>
+          <p class="hero-lead">一份完整記錄 <strong>01–12</strong> 實驗如何從自製 TD3 baseline，逐步找到自然、省力、沒有站著 attractor 的四足步態。最終答案不是更多訓練，而是正確的 curriculum 與正確的早停點。</p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#summary">查看最終結論</a>
+            <a class="btn" href="./12train_td3/checkpoints/td3_gait_ft_25000_steps.zip">冠軍模型</a>
+            <button class="btn" type="button" onclick="window.print()">列印報告</button>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat"><b>12@25k</b><span>Current champion</span></div>
+            <div class="hero-stat"><b>1.025M</b><span>Total training steps</span></div>
+            <div class="hero-stat"><b>0.983</b><span>Mean speed</span></div>
+            <div class="hero-stat"><b>0.960</b><span>Transport cost</span></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="section" id="summary">
+        <div class="section-inner">
+          <div class="section-kicker">Executive summary</div>
+          <h2>12@25k 是目前最佳模型</h2>
+          <p class="section-intro">它保留 03 的自然觀感，移除低速時的 legacy gait 收益，並在速度漂移發生前早停。五項預先設定的約束全部通過。</p>
+          <article class="champion">
+            <div class="champion-copy">
+              <div class="status-line"><span class="status-dot"></span>Champion checkpoint</div>
+              <h3>03 預訓練 → Gate 微調 → 25k 早停</h3>
+              <p>先用完整 03 reward 訓練 1M steps，讓站立 gait 分數扮演學習鷹架；再載入模型、清空 replay buffer、加入 <code>gait_speed_gate=0.3</code> 微調。25k 是微調步數，總訓練量約 1.025M。</p>
+              <div class="constraint-list" aria-label="冠軍模型通過的約束">
+                <span class="constraint pass">episode = 1000</span>
+                <span class="constraint pass">speed ≥ 0.9</span>
+                <span class="constraint pass">jerk ≤ 0.05</span>
+                <span class="constraint pass">CoT ≤ 1.5</span>
+                <span class="constraint pass">diag sync ≥ 0.65</span>
+              </div>
+            </div>
+            <div class="champion-metrics">
+              <div class="metric-tile"><b>0.983</b><span>Mean speed</span></div>
+              <div class="metric-tile"><b>0.037</b><span>Action jerk</span></div>
+              <div class="metric-tile"><b>0.960</b><span>Transport cost</span></div>
+              <div class="metric-tile"><b>0.678</b><span>Diagonal sync</span></div>
+              <div class="metric-tile"><b>0.245</b><span>Anti phase</span></div>
+              <div class="metric-tile"><b>0.990</b><span>Uprightness</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="section-inner">
+          <div class="section-kicker">System architecture</div>
+          <h2>同一個 TD3，兩代實作</h2>
+          <p class="section-intro">01–02 用 PyTorch 從零實作 TD3；03 起切換 Stable-Baselines3，演算法核心不變，但網路容量、訓練管線與評估能力更完整。</p>
+          <div class="arch-grid">
+            <article class="arch-card">
+              <div class="phase">Phase A · 01–02 · Custom PyTorch</div>
+              <h3>Actor：105 → 256 → 256 → 8</h3>
+              <div class="network" aria-label="自製 Actor 架構">
+                <div class="node"><span>Observation<strong>105</strong></span></div>
+                <div class="node"><span>ReLU<strong>256</strong></span></div>
+                <div class="node"><span>ReLU<strong>256</strong></span></div>
+                <div class="node"><span>Tanh action<strong>8</strong></span></div>
+              </div>
+              <h3>Critic：雙 Q 網路</h3>
+              <div class="twins"><div>Q1 · 113→256→256→1</div><div>Q2 · 113→256→256→1</div></div>
+              <p class="table-note">Critic 將 observation 105 與 action 8 串接，輸入共 113 維。</p>
+            </article>
+            <article class="arch-card">
+              <div class="phase">Phase B · 03–12 · SB3 TD3 MlpPolicy</div>
+              <h3>Actor：105 → 400 → 300 → 8</h3>
+              <div class="network" aria-label="SB3 Actor 架構">
+                <div class="node"><span>Observation<strong>105</strong></span></div>
+                <div class="node"><span>ReLU<strong>400</strong></span></div>
+                <div class="node"><span>ReLU<strong>300</strong></span></div>
+                <div class="node"><span>Tanh action<strong>8</strong></span></div>
+              </div>
+              <h3>Critic：雙 Q 網路</h3>
+              <div class="twins"><div>Q1 · 113→400→300→1</div><div>Q2 · 113→400→300→1</div></div>
+              <p class="table-note"><code>policy_kwargs={}</code>，使用 SB3 TD3 預設網路。12 微調沿用 03 的 actor / critic 權重。</p>
+            </article>
+          </div>
+          <div class="mechanisms">
+            <div class="mechanism"><b>Twin Critics</b><small>target 取 min(Q1,Q2)，壓低過估計。</small></div>
+            <div class="mechanism"><b>Delayed Policy Update</b><small>Actor 每 2 次 critic 更新一次。</small></div>
+            <div class="mechanism"><b>Target Policy Smoothing</b><small>target action 加 σ=0.2、clip=0.5 的噪聲。</small></div>
+          </div>
+          <div class="table-wrap" style="margin-top:20px">
+            <table aria-label="TD3 共用超參數">
+              <thead><tr><th>參數</th><th>01–02</th><th>03–11</th><th>12 微調</th></tr></thead>
+              <tbody>
+                <tr><td>learning rate</td><td>3e-4</td><td>3e-4</td><td>1e-4</td></tr>
+                <tr><td>buffer size</td><td>1,000,000</td><td>1,000,000</td><td>清空後重建</td></tr>
+                <tr><td>batch / γ / τ</td><td>256 / .99 / .005</td><td>256 / .99 / .005</td><td>沿用</td></tr>
+                <tr><td>learning starts</td><td>25,000</td><td>10,000</td><td>0</td></tr>
+                <tr><td>exploration noise</td><td>.10</td><td>.10</td><td>.03</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="reward">
+        <div class="section-inner">
+          <div class="section-kicker">Reward engineering</div>
+          <h2>真正的主角是 reward 地形</h2>
+          <p class="section-intro">演算法一直是 TD3；版本差異主要來自速度、步態、控制力與存活分數如何組合。後期實驗證明，代理指標漂亮不等於肉眼自然。</p>
+          <div class="formula-grid">
+            <article class="formula-card">
+              <h3>03 · Additive legacy</h3>
+              <div class="formula mono">r = r_speed + r_alive + r_ctrl + r_gait + r_posture</div>
+              <p><code>r_speed=-|vₓ−1|</code>；<code>ctrl=−5‖a‖²</code>；legacy gait 逐幀獎勵同對角同步。優點是密集、穩定、自然；缺點是靜止四腳著地仍有 gait 分。</p>
+            </article>
+            <article class="formula-card">
+              <h3>04–10 · Forward gated</h3>
+              <div class="formula mono">r⁺ = progress(vₓ) · (1 + r_gait)</div>
+              <p>不前進就拿不到步態正收益，堵住站著與原地踏步；但早期正訊號稀薄，並容易讓 binary contact proxy 主導動作，造成頓腳、抖動與高能耗。</p>
+            </article>
+            <article class="formula-card highlight">
+              <h3>12 · Gait-only smooth gate</h3>
+              <div class="formula mono">p=clip(vₓ/.3); g=p²(3−2p); r′gait=g·r_gait</div>
+              <p>只在低速削掉 gait 分，不動 alive、speed 與其他 reward。從零訓練會失去鷹架；從 03 checkpoint 微調則同時保留步態與移除 attractor。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="curriculum">
+        <div class="section-inner">
+          <div class="section-kicker">Final recipe</div>
+          <h2>兩階段 curriculum</h2>
+          <p class="section-intro">25k 並不是「只訓練 25k」。它是接在 03 的 1M 預訓練後面，用較低學習率做小幅 reward 遷移。</p>
+          <div class="pipeline">
+            <article class="stage"><span class="num">Stage 01</span><strong>03 預訓練</strong><p>1,000,000 steps。完整 legacy gait 分數提供站穩與探索步態的學習鷹架。</p></article>
+            <div class="pipeline-arrow">→</div>
+            <article class="stage"><span class="num">Stage 02</span><strong>切換 Gate</strong><p>載入 actor / critics、清空 replay buffer、learning_starts=0、noise=.03。</p></article>
+            <div class="pipeline-arrow">→</div>
+            <article class="stage"><span class="num">Stage 03</span><strong>25k 早停</strong><p>固定五項約束選 checkpoint。120k final 已發生速度漂移，不自動視為最佳。</p></article>
+          </div>
+          <div class="total-training"><b>總訓練量：1,000,000 + 25,000 = 1,025,000 steps。</b> 25k 是微調甜蜜點，不是 undertraining。</div>
+        </div>
+      </section>
+
+      <section class="section" id="versions">
+        <div class="section-inner">
+          <div class="section-kicker">Experiment timeline</div>
+          <h2>01–12 版本演進</h2>
+          <p class="section-intro">用篩選器快速查看完整版本、失敗探針或 curriculum 階段。失敗版本保留，因為它們定義了目前答案的邊界。</p>
+          <div class="filters" role="group" aria-label="版本篩選">
+            <button class="filter-btn active" data-filter="all">全部</button>
+            <button class="filter-btn" data-filter="result">正式結果</button>
+            <button class="filter-btn" data-filter="failure">失敗／反證</button>
+            <button class="filter-btn" data-filter="curriculum">Curriculum</button>
+          </div>
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </section>
+
+      <section class="section" id="results">
+        <div class="section-inner">
+          <div class="section-kicker">Quantitative scorecard</div>
+          <h2>同一套量測，公平比較</h2>
+          <p class="section-intro">03–12 的步態模型以相同 Ant-v5 評估環境跑 deterministic episodes。點擊欄位可排序；「—」代表現有紀錄沒有該數值，不補造資料。</p>
+          <div class="table-wrap">
+            <table id="score-table" aria-label="TD3 步態版本量化比較">
+              <thead><tr>
+                <th data-key="version">版本</th><th data-key="speed">速度</th><th data-key="error">速度誤差</th><th data-key="regularity">週期性</th><th data-key="anti">反相</th><th data-key="diag">對角同步</th><th data-key="jerk">Jerk</th><th data-key="cot">CoT</th><th data-key="upright">直立度</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="table-note">方向：速度接近 1.0；速度誤差、Jerk、CoT 越低越好；其餘越高越好。01–02 使用原始／自訂 reward，沒有同規格 gait scorecard，因此不放入數值表。</p>
+          <div class="compare">
+            <article class="compare-card">
+              <h3>03 · 原始觀感基準</h3>
+              <div class="metric-bar"><div class="metric-bar-head"><span>速度</span><b>.940</b></div><div class="track"><div class="fill" style="--w:94%"></div></div></div>
+              <div class="metric-bar"><div class="metric-bar-head"><span>平滑度（1−normalized jerk）</span><b>.972</b></div><div class="track"><div class="fill" style="--w:97.2%"></div></div></div>
+              <div class="metric-bar"><div class="metric-bar-head"><span>對角同步</span><b>.712</b></div><div class="track"><div class="fill" style="--w:71.2%"></div></div></div>
+            </article>
+            <article class="compare-card champ">
+              <h3>12@25k · 冠軍</h3>
+              <div class="metric-bar"><div class="metric-bar-head"><span>速度</span><b>.983</b></div><div class="track"><div class="fill" style="--w:98.3%"></div></div></div>
+              <div class="metric-bar"><div class="metric-bar-head"><span>平滑度（1−normalized jerk）</span><b>.963</b></div><div class="track"><div class="fill" style="--w:96.3%"></div></div></div>
+              <div class="metric-bar"><div class="metric-bar-head"><span>對角同步</span><b>.678</b></div><div class="track"><div class="fill" style="--w:67.8%"></div></div></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="lessons">
+        <div class="section-inner">
+          <div class="section-kicker">What the failures taught us</div>
+          <h2>最重要的不是哪個權重最大</h2>
+          <div class="lessons">
+            <article class="lesson"><b>03 的站立分數是鷹架，也是漏洞</b><p>它讓 cold start 先學會站穩；成熟 policy 卻不需要它。正確解法是 curriculum，不是從第一步就 gate。</p></article>
+            <article class="lesson fail"><b>代理指標會被 reward hacking</b><p>08 的 anti-phase 與 regularity 最漂亮，但 jerk、CoT 和肉眼觀感退步。binary contact 指標不能單獨當目標。</p></article>
+            <article class="lesson fail"><b>10 沒有隔離變因</b><p>legacy × forward gate 同時改了多個權重與結構，結果變差只能反證整組設計，不能單獨證明某一個旋鈕。</p></article>
+            <article class="lesson"><b>Final model 不等於 best model</b><p>12 從 25k 到 120k 速度誤差持續惡化；checkpoint 必須依預先定義約束選擇，不能自動拿最後一步。</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="artifacts">
+        <div class="section-inner">
+          <div class="section-kicker">Artifacts</div>
+          <h2>模型、影片與原始資料</h2>
+          <div class="artifacts">
+            <div class="video-shell">
+              <video controls preload="metadata">
+                <source src="../../gait_videos/12/12_step_0025000.mp4" type="video/mp4">
+                瀏覽器不支援 MP4 播放，請使用右側連結開啟影片。
+              </video>
+            </div>
+            <div class="artifact-links">
+              <a class="artifact-link" href="./12train_td3/checkpoints/td3_gait_ft_25000_steps.zip"><strong>12@25k 冠軍模型</strong><span>SB3 ZIP</span></a>
+              <a class="artifact-link" href="../../gait_videos/12/12_step_0025000.mp4"><strong>冠軍步態影片</strong><span>MP4</span></a>
+              <a class="artifact-link" href="../12train_td3.py"><strong>Curriculum 訓練腳本</strong><span>Python</span></a>
+              <a class="artifact-link" href="../tools/gait_wrapper_03.py"><strong>Reward Wrapper</strong><span>Python</span></a>
+              <a class="artifact-link" href="./03_vs_04_comparison.html"><strong>原始量化比較表</strong><span>HTML</span></a>
+              <a class="artifact-link" href="../markdown/03_train_td3_spec.md"><strong>03 設計規格</strong><span>Markdown</span></a>
+            </div>
+          </div>
+          <div class="method-note" style="margin-top:24px">方法備註：量化指標由 <code>tools/gait_metrics.py</code> 計算；跨 reward 版本不比較 episode return，而使用速度、接觸序列、action 與姿態衍生指標。12@25k 的數據來自 10 個 deterministic episodes。multi-seed 訓練穩健性尚未執行，因此目前結論是「最佳已知 checkpoint」，不是跨 seed 的統計保證。</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer><div class="footer-inner"><span>RLAP · TD3 Gait Research Report</span><span>Source snapshot: 2026-06-22 · Champion commit a50ef0a</span></div></footer>
+
+  <div class="floating-tools">
+    <div class="tweaks" id="tweaks" aria-hidden="true">
+      <h3>Tweaks</h3>
+      <div class="tweak-row"><span>Theme</span><button class="switch" id="theme-switch" type="button">Light</button></div>
+      <div class="tweak-row"><span>Compact timeline</span><button class="switch" id="density-switch" type="button">Off</button></div>
+      <div class="tweak-row"><span>Reward formulas</span><button class="switch" id="formula-switch" type="button">Shown</button></div>
+    </div>
+    <button class="tool-toggle" id="tool-toggle" type="button" aria-label="開啟顯示設定" aria-expanded="false">Aa</button>
+  </div>
+
+  <script>
+    const versions = [
+      {v:"01", group:"result", tone:"neutral", status:"baseline", title:"自製 TD3 baseline", desc:"從零實作 Twin Critics、Delayed Policy Update、Target Policy Smoothing 與 replay buffer。", result:"完成 1M steps 與每 100k checkpoint；建立後續 reward 實驗基線，尚未使用 gait scorecard。", chips:["PyTorch", "256×256", "Ant-v5", "seed=42"]},
+      {v:"02", group:"result", tone:"neutral", status:"reward shaping", title:"邊界與動作正則化", desc:"healthy reward 降至 .1、contact cost ×10，加入 6m soft boundary、8m terminal boundary、action magnitude / delta 懲罰。", result:"解決站著、重踩與出界學習問題；歷史 eval reward 約 4090–5183，但與後期 gait reward 不可直接比較。", chips:["healthy=.1", "contact=.005", "boundary=6/8m", "action=.5/.1"]},
+      {v:"03", group:"result", tone:"good", status:"visual baseline", title:"SB3 + RealisticGaitWrapper", desc:"切換 SB3 TD3；legacy 對角同步、deviation 速度、additive reward、ctrl=5。", result:"目前最自然的原始基準：speed .94、jerk .028、CoT 1.02、diagonal sync .712。缺點是靜止四腳著地仍有 gait 分。", chips:["legacy", "additive", "ctrl=5", "gait=2"]},
+      {v:"04", group:"failure", tone:"warn", status:"overspeed", title:"Forward-gated 防鑽洞", desc:"用 antiphase_gated + forward_gated 讓站著與原地踏步沒有正收益，同時大幅放鬆控制懲罰。", result:"能走滿 1000 steps，但 speed 1.29、jerk .329、CoT 5.56；結構穩定，觀感明顯退步。", chips:["ctrl=.5", "smooth=.02", "forward gate", "cap"]},
+      {v:"05", group:"failure", tone:"warn", status:"rhythm ↑", title:"融合步態品質", desc:"提高 gait、posture、tilt、smooth，試圖在安全結構裡拿回 03 的俐落感。", result:"anti-phase .326、diag sync .677，但 speed 1.37、CoT 2.85，仍超速且費力。", chips:["gait=3", "ctrl=1", "smooth=.25", "tilt=.8"]},
+      {v:"06", group:"result", tone:"good", status:"smooth shaped", title:"Tent 速度控制", desc:"forward gate 改 tent，超過目標速度也遞減；ctrl 與 smooth 再加重。", result:"speed .83、jerk .087、upright .989；是 shaped 系列最平滑版本，但步態被磨柔。", chips:["tent", "ctrl=1.5", "smooth=.40"]},
+      {v:"07", group:"result", tone:"good", status:"speed winner", title:"拉回踏步銳利度", desc:"gait 3→4.5、smooth .40→.30、ctrl 1.5→1.2，用較大步態收益換回踏步。", result:"speed .958、speed error .100 全場最佳；代價是 jerk .120、diag sync .544。", chips:["gait=4.5", "ctrl=1.2", "smooth=.30", "tent"]},
+      {v:"08", group:"result", tone:"good", status:"proxy winner", title:"加重 intra 同步", desc:"intra .25→.35、smooth .30→.35，試圖同時提高同對角同步與平滑。", result:"regularity .380、anti-phase .358、upright .993 三冠；但 jerk .133、CoT 4.16，代理指標與肉眼觀感分離。", chips:["intra=.35", "smooth=.35", "gait=4.5"]},
+      {v:"09", group:"failure", tone:"neutral", status:"not completed", title:"重 smooth / ctrl 極限", desc:"保持強 gait，將 smooth 拉到 .50、ctrl 到 2.0、intra 到 .40。", result:"未跑完即中止，轉向 10 的結構性假設；保留設定作為實驗軌跡。", chips:["ctrl=2", "smooth=.50", "intra=.40"]},
+      {v:"10", group:"failure", tone:"fail", status:"hypothesis rejected", title:"Legacy × Forward Gate", desc:"假設 03 的平滑來自 legacy gait，將 legacy 接到 forward_gated 與 tent 速度。", result:"反證：jerk .216、CoT 4.91、regularity .128 均為 shaped 最差；legacy 公式本身不是觀感來源。", chips:["legacy", "forward gate", "ctrl=2", "gait=2.5"]},
+      {v:"11", group:"failure curriculum", tone:"fail", status:"cold-start failed", title:"03 + Gait Speed Gate", desc:"只改一個變因：gait_speed_gate=.3，從零訓練，直接拿掉站著 gait 分。", result:"300k 仍約 13 steps 秒摔。證明站著 gait 分數同時是 03 cold-start 的學習鷹架。", chips:["single variable", "gate=.3", "from scratch"]},
+      {v:"12", group:"result curriculum", tone:"good", status:"champion", title:"Checkpoint Curriculum", desc:"載入 03、清空 buffer、套 gate、lr 1e-4、noise .03；以約束選 checkpoint。", result:"25k 五約束全過，speed .983、jerk .037、CoT .960；120k 速度漂到 .88，證明 final 不等於 best。", chips:["03→gate", "lr=1e-4", "noise=.03", "early stop=25k"]}
+    ];
+
+    const scores = [
+      {version:"03", speed:.940, error:.140, regularity:.239, anti:.209, diag:.712, jerk:.028, cot:1.02, upright:.986},
+      {version:"04", speed:1.29, error:.328, regularity:.334, anti:.321, diag:.601, jerk:.329, cot:5.56, upright:.982},
+      {version:"05", speed:1.37, error:.397, regularity:.355, anti:.326, diag:.677, jerk:.158, cot:2.85, upright:.977},
+      {version:"06", speed:.830, error:.219, regularity:.344, anti:.212, diag:.552, jerk:.087, cot:2.62, upright:.989},
+      {version:"07", speed:.958, error:.100, regularity:.308, anti:.267, diag:.544, jerk:.120, cot:3.01, upright:.979},
+      {version:"08", speed:.922, error:.168, regularity:.380, anti:.358, diag:.575, jerk:.133, cot:4.16, upright:.993},
+      {version:"10", speed:.886, error:.160, regularity:.128, anti:.175, diag:.606, jerk:.216, cot:4.91, upright:.985},
+      {version:"12 final", speed:.880, error:.181, regularity:null, anti:null, diag:.689, jerk:.042, cot:1.09, upright:.985},
+      {version:"12 @ 25k", speed:.983, error:.108, regularity:null, anti:.245, diag:.678, jerk:.037, cot:.960, upright:.990, champion:true}
+    ];
+
+    const timeline = document.getElementById("timeline");
+    function renderTimeline(filter="all") {
+      timeline.innerHTML = versions.map(item => {
+        const visible = filter === "all" || item.group.includes(filter);
+        return `<article class="version-card" data-group="${item.group}" ${visible ? "" : "hidden"}>
+          <div class="version-num">${item.v}</div>
+          <div class="version-body">
+            <div class="version-top"><div><h3>${item.title}</h3><p>${item.desc}</p></div><span class="version-status ${item.tone}">${item.status}</span></div>
+            <div class="version-result"><strong>結果：</strong>${item.result}</div>
+            <div class="chips">${item.chips.map(chip => `<span class="chip">${chip}</span>`).join("")}</div>
+          </div>
+        </article>`;
+      }).join("");
+    }
+    renderTimeline();
+
+    document.querySelectorAll(".filter-btn").forEach(btn => btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderTimeline(btn.dataset.filter);
+    }));
+
+    const scoreBody = document.querySelector("#score-table tbody");
+    function fmt(value) { return value == null ? `<span class="dash">—</span>` : Number(value).toFixed(value >= 1 ? 2 : 3); }
+    function renderScores(rows=scores) {
+      scoreBody.innerHTML = rows.map(row => `<tr class="${row.champion ? "champion-row" : ""}">
+        <td>${row.version}${row.champion ? " · champion" : ""}</td><td>${fmt(row.speed)}</td><td>${fmt(row.error)}</td><td>${fmt(row.regularity)}</td><td>${fmt(row.anti)}</td><td>${fmt(row.diag)}</td><td>${fmt(row.jerk)}</td><td>${fmt(row.cot)}</td><td>${fmt(row.upright)}</td>
+      </tr>`).join("");
+    }
+    renderScores();
+
+    let sortState = {key:"version", asc:true};
+    document.querySelectorAll("#score-table th").forEach(th => th.addEventListener("click", () => {
+      const key = th.dataset.key;
+      sortState.asc = sortState.key === key ? !sortState.asc : true;
+      sortState.key = key;
+      const rows = [...scores].sort((a,b) => {
+        const av = a[key], bv = b[key];
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        return (typeof av === "string" ? av.localeCompare(bv, "zh-Hant") : av-bv) * (sortState.asc ? 1 : -1);
+      });
+      renderScores(rows);
+    }));
+
+    const toolToggle = document.getElementById("tool-toggle");
+    const tweaks = document.getElementById("tweaks");
+    toolToggle.addEventListener("click", () => {
+      const open = tweaks.classList.toggle("open");
+      tweaks.setAttribute("aria-hidden", String(!open));
+      toolToggle.setAttribute("aria-expanded", String(open));
+    });
+
+    const themeSwitch = document.getElementById("theme-switch");
+    const savedTheme = localStorage.getItem("rlap-report-theme") || "dark";
+    document.documentElement.dataset.theme = savedTheme;
+    themeSwitch.textContent = savedTheme === "dark" ? "Light" : "Dark";
+    themeSwitch.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("rlap-report-theme", next);
+      themeSwitch.textContent = next === "dark" ? "Light" : "Dark";
+    });
+    document.getElementById("density-switch").addEventListener("click", e => {
+      const on = document.body.classList.toggle("compact");
+      e.currentTarget.textContent = on ? "On" : "Off";
+    });
+    document.getElementById("formula-switch").addEventListener("click", e => {
+      const hidden = document.body.classList.toggle("hide-formulas");
+      e.currentTarget.textContent = hidden ? "Hidden" : "Shown";
+    });
+
+    const sectionLinks = [...document.querySelectorAll(".side nav a")];
+    const sections = sectionLinks.map(link => document.querySelector(link.getAttribute("href"))).filter(Boolean);
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          sectionLinks.forEach(link => link.classList.toggle("active", link.getAttribute("href") === `#${entry.target.id}`));
+        }
+      });
+    }, {rootMargin:"-35% 0px -58% 0px"});
+    sections.forEach(section => observer.observe(section));
+  </script>
+</body>
+</html>
