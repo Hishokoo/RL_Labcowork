@@ -24,12 +24,13 @@ from tools import gait_metrics
 ENV_NAME = "Ant-v5"
 
 
-def make_env(wrap_kwargs: dict, seed: int = 0, render_mode: str | None = None) -> gym.Env:
+def make_env(wrap_kwargs: dict, seed: int = 0, render_mode: str | None = None,
+             wrapper_cls: type = RealisticGaitWrapper) -> gym.Env:
     env = gym.make(
         ENV_NAME, render_mode=render_mode, healthy_reward=1.0,
         forward_reward_weight=1.0, ctrl_cost_weight=0.5, contact_cost_weight=5e-4,
     )
-    env = RealisticGaitWrapper(env, **wrap_kwargs)
+    env = wrapper_cls(env, **wrap_kwargs)
     env.reset(seed=seed)
     return env
 
@@ -41,8 +42,9 @@ class GaitMonitorCallback(BaseCallback):
         for info in self.locals.get("infos", []):
             if "reward_components" in info:
                 c = info["reward_components"]
-                for k in ("forward", "alive", "ctrl", "gait", "posture", "smooth", "tilt"):
-                    self.logger.record_mean(f"gait/r_{k}", c[k])
+                for k in ("forward", "alive", "ctrl", "gait", "posture", "smooth", "tilt", "antiphase_bonus"):
+                    if k in c:
+                        self.logger.record_mean(f"gait/r_{k}", c[k])
                 for k in ("x_velocity", "torso_z", "uprightness", "anti_phase"):
                     self.logger.record_mean(f"gait/{k}", c[k])
             if "foot_contacts" in info:
@@ -59,7 +61,7 @@ class EvalScorecardCallback(BaseCallback):
 
     def __init__(self, wrap_kwargs: dict, target_speed: float, output_dir: str,
                  eval_interval: int = 50_000, video_interval: int = 200_000,
-                 seed: int = 0, verbose: int = 0):
+                 seed: int = 0, verbose: int = 0, wrapper_cls: type = RealisticGaitWrapper):
         super().__init__(verbose)
         self.wrap_kwargs = wrap_kwargs
         self.target_speed = target_speed
@@ -67,6 +69,7 @@ class EvalScorecardCallback(BaseCallback):
         self.eval_interval = eval_interval
         self.video_interval = video_interval
         self.seed = seed
+        self.wrapper_cls = wrapper_cls
         self._last_eval_block = 0
         self._last_video_block = 0
 
@@ -83,7 +86,8 @@ class EvalScorecardCallback(BaseCallback):
 
     def _record_episode(self, step: int, record_video: bool) -> None:
         env = make_env(self.wrap_kwargs, seed=self.seed + 1,
-                       render_mode="rgb_array" if record_video else None)
+                       render_mode="rgb_array" if record_video else None,
+                       wrapper_cls=self.wrapper_cls)
         if record_video:
             env = RecordVideo(env, video_folder=f"{self.video_root}/step_{step:07d}",
                               name_prefix=f"eval_step_{step}", episode_trigger=lambda ep: True)
@@ -130,18 +134,19 @@ class EvalScorecardCallback(BaseCallback):
 def train(wrap_kwargs: dict, output_dir: str, *, target_speed: float = 1.0,
           max_timesteps: int = 1_000_000, learning_starts: int = 10_000,
           eval_interval: int = 50_000, video_interval: int = 200_000,
-          checkpoint_freq: int = 100_000, n_envs: int = 1, seed: int = 0) -> None:
+          checkpoint_freq: int = 100_000, n_envs: int = 1, seed: int = 0,
+          wrapper_cls: type = RealisticGaitWrapper) -> None:
     os.makedirs(output_dir, exist_ok=True)
 
     if n_envs > 1:
         # 多環境用 SubprocVecEnv 並行收集；維持 1:1 梯度更新比例（總更新數不變）
         train_env = SubprocVecEnv(
-            [partial(make_env, wrap_kwargs, seed=seed + i) for i in range(n_envs)],
+            [partial(make_env, wrap_kwargs, seed=seed + i, wrapper_cls=wrapper_cls) for i in range(n_envs)],
             start_method="fork",
         )
         freq_kwargs = dict(train_freq=(1, "step"), gradient_steps=n_envs)
     else:
-        train_env = DummyVecEnv([lambda: make_env(wrap_kwargs, seed=seed)])
+        train_env = DummyVecEnv([lambda: make_env(wrap_kwargs, seed=seed, wrapper_cls=wrapper_cls)])
         freq_kwargs = dict()  # 沿用 TD3 預設 (1,"episode"), -1
 
     n_actions = train_env.action_space.shape[-1]
@@ -164,7 +169,8 @@ def train(wrap_kwargs: dict, output_dir: str, *, target_speed: float = 1.0,
         callback=[
             GaitMonitorCallback(),
             EvalScorecardCallback(wrap_kwargs, target_speed, output_dir,
-                                  eval_interval, video_interval, seed, verbose=1),
+                                  eval_interval, video_interval, seed, verbose=1,
+                                  wrapper_cls=wrapper_cls),
             checkpoint_cb,
         ],
         progress_bar=True,
@@ -177,7 +183,8 @@ def finetune(wrap_kwargs: dict, output_dir: str, init_model_path: str, *,
              target_speed: float = 1.0, max_timesteps: int = 120_000,
              learning_rate: float = 1e-4, action_noise_sigma: float = 0.03,
              eval_interval: int = 25_000, video_interval: int = 25_000,
-             checkpoint_freq: int = 25_000, seed: int = 0) -> None:
+             checkpoint_freq: int = 25_000, seed: int = 0,
+             wrapper_cls: type = RealisticGaitWrapper) -> None:
     """從既有 checkpoint 接續微調（curriculum 用）：載入 actor/critic、換成新 reward、
     清空 replay buffer（不載入舊 buffer，避免混用新舊 reward）、不做 random warmup
     （learning_starts=0，第一個 episode 即用載入的策略收集），用較小 lr / action noise。
@@ -185,7 +192,7 @@ def finetune(wrap_kwargs: dict, output_dir: str, init_model_path: str, *,
     與 train() 的差別僅在「初始化方式」——callback / 指標 / 錄影完全沿用，確保可比較。
     """
     os.makedirs(output_dir, exist_ok=True)
-    train_env = DummyVecEnv([lambda: make_env(wrap_kwargs, seed=seed)])
+    train_env = DummyVecEnv([lambda: make_env(wrap_kwargs, seed=seed, wrapper_cls=wrapper_cls)])
 
     n_actions = train_env.action_space.shape[-1]
     action_noise = NormalActionNoise(
@@ -213,7 +220,8 @@ def finetune(wrap_kwargs: dict, output_dir: str, init_model_path: str, *,
         callback=[
             GaitMonitorCallback(),
             EvalScorecardCallback(wrap_kwargs, target_speed, output_dir,
-                                  eval_interval, video_interval, seed, verbose=1),
+                                  eval_interval, video_interval, seed, verbose=1,
+                                  wrapper_cls=wrapper_cls),
             checkpoint_cb,
         ],
         progress_bar=True,

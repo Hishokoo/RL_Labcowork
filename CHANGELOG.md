@@ -10,7 +10,11 @@
 ## [2026-06-23]
 
 ### 新增
+- `tools/gait_wrapper_12a.py` + `12a_train_td3.py`：依 `markdown/12a_train_td3_spec.md` 實作 v12a，修補 12 在 25k 步後退化的對齊缺口——新增 `antiphase_bonus_weight=0.5`（疊加 anti_phase 直接訊號，受 speed gate 保護）、啟用既有 `smooth_weight=0.5`/`tilt_weight=1.0`（保護 03 的 jerk/uprightness 強項）。從 03 final_model 接續 finetune，`max_timesteps=80_000`、`learning_rate=5e-5`，eval/ckpt 加密到每 10k 步。smoke test（5k 步）已驗證可載入 03 checkpoint、reward components 含 `antiphase_bonus`、TensorBoard 含 `gait/r_antiphase_bonus`/`r_smooth`/`r_tilt` 三個新欄位
 - `output/02train_td3_reward_formula.html`：整理 `02train_td3.py` reward 修正的兩階段目標（邊界懲罰+動作正則化、修正站著不動 attractor）與完整計算公式匯出報告
+
+### 變更
+- `tools/gait_train.py`：`make_env` / `train` / `finetune` / `EvalScorecardCallback` 新增可選參數 `wrapper_cls`（預設仍為 `gait_wrapper_03.RealisticGaitWrapper`，向後相容），讓 12a 可指定載入 `gait_wrapper_12a`；`GaitMonitorCallback` 新增對 `antiphase_bonus` 鍵的條件式 TB logging（無此鍵的舊 wrapper 不受影響）
 
 ## [2026-06-22] — 同步遠端並統一 gait_wrapper 命名
 
