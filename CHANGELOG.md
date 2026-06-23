@@ -10,11 +10,22 @@
 ## [2026-06-23]
 
 ### 新增
-- `tools/gait_wrapper_12a.py` + `12a_train_td3.py`：依 `markdown/12a_train_td3_spec.md` 實作 v12a，修補 12 在 25k 步後退化的對齊缺口——新增 `antiphase_bonus_weight=0.5`（疊加 anti_phase 直接訊號，受 speed gate 保護）、啟用既有 `smooth_weight=0.5`/`tilt_weight=1.0`（保護 03 的 jerk/uprightness 強項）。從 03 final_model 接續 finetune，`max_timesteps=80_000`、`learning_rate=5e-5`，eval/ckpt 加密到每 10k 步。smoke test（5k 步）已驗證可載入 03 checkpoint、reward components 含 `antiphase_bonus`、TensorBoard 含 `gait/r_antiphase_bonus`/`r_smooth`/`r_tilt` 三個新欄位
+- `tools/gait_wrapper_12a.py` + `12a_train_td3.py`：依 `markdown/12a_train_td3_spec.md` 實作 v12a，修補 12 在 25k 步後退化的對齊缺口——新增 `antiphase_bonus_weight`（疊加 anti_phase 直接訊號，受 speed gate 保護）、啟用既有 `smooth_weight`/`tilt_weight`（保護 03 的 jerk/uprightness 強項）。從 03 final_model 接續 finetune。smoke test（5k 步）已驗證可載入 03 checkpoint、reward components 含 `antiphase_bonus`、TensorBoard 含 `gait/r_antiphase_bonus`/`r_smooth`/`r_tilt` 三個新欄位
 - `output/02train_td3_reward_formula.html`：整理 `02train_td3.py` reward 修正的兩階段目標（邊界懲罰+動作正則化、修正站著不動 attractor）與完整計算公式匯出報告
+- `output/03_vs_12at25k_raw_episodes.csv`：03 與 12@25k 各 10 個 deterministic episode 的逐筆原始指標（非彙整 mean/std），供外部分析軟體使用
 
 ### 變更
 - `tools/gait_train.py`：`make_env` / `train` / `finetune` / `EvalScorecardCallback` 新增可選參數 `wrapper_cls`（預設仍為 `gait_wrapper_03.RealisticGaitWrapper`，向後相容），讓 12a 可指定載入 `gait_wrapper_12a`；`GaitMonitorCallback` 新增對 `antiphase_bonus` 鍵的條件式 TB logging（無此鍵的舊 wrapper 不受影響）
+- `.gitignore`：修正 `output/**/replay_buffer*` 規則 —— 原本寫成行內註解（`pattern   # 說明`），但 gitignore 不支援行內註解，整行被當成一個 pattern 字面值，導致規則完全沒生效。改成獨立註解行 + 獨立 pattern 行，已用 `git check-ignore` 驗證生效（本機 12a 訓練產生的 1.6GB `replay_buffer.pkl` 確認被正確排除）
+
+### 實驗結論：v12a 50k 步驗證（本機跑，未達標）
+- 在本機（CPU）跑了三組 12a 設定各 50k 步，皆未達 spec 的 anti_phase≥0.27 必達門檻：
+  1. `antiphase_bonus_weight=0.5, gait_speed_gate=0.3`（spec 原始配方）：anti_phase 峰值 **0.247 @40k**，三組最佳
+  2. `antiphase_bonus_weight=1.0, gait_speed_gate=0.3`（spec 失敗診斷建議一）：anti_phase 峰值降到 0.231——**加重 bonus 反而更差**，因為 legacy 主項的 `diag1/diag2_sync` 對「四腳同步」有結構性偏好（站著也偏高），加重 bonus 後 diagonal_sync 被推更高（0.665→0.70+）、anti_phase 反被擠壓
+  3. `antiphase_bonus_weight=0.5, gait_speed_gate=0.15`（spec 失敗診斷建議二）：anti_phase 峰值僅 0.230，比設定 1 更差
+- 拿設定 1（三組最佳）與 12@25k 做統計對照（10-episode mean±std）：anti_phase 0.247±0.010 vs 12@25k 的 0.243±0.007，**差異在 1 個標準差內、不具統計意義**；而 12@25k 在 mean_speed（0.980 vs 0.971）、speed_error（0.115 vs 0.122）、diagonal_sync（0.678 vs 0.665）、transport_cost（0.966 vs 0.989）都顯著贏過 v12a。
+- **結論：v12a（在 legacy 主公式上疊加 anti_phase bonus）未能勝過 12@25k，12@25k 仍是目前最佳模型**。這不是參數沒調好的問題——spec 自己列的兩個失敗診斷方向都驗證為更差，顯示「疊加 bonus」這個設計本身在這個權重/gate 範圍內打不穿 anti_phase 天花板。下一步應考慮 spec 第 8 節規劃的 v12b（EMA gate）或重新設計 reward 結構，而非繼續在這個方向微調。
+- 三組訓練的 checkpoint 皆未優於現有最佳模型，不納入版控（同 13 的失敗 artifact 慣例）；完整數據見 `output/03_vs_12at25k_raw_episodes.csv`。
 
 ## [2026-06-22] — 同步遠端並統一 gait_wrapper 命名
 
