@@ -170,6 +170,7 @@ def train(wrap_kwargs: dict, output_dir: str, *, target_speed: float = 1.0,
         progress_bar=True,
     )
     model.save(f"{output_dir}/final_model")
+    model.save_replay_buffer(f"{output_dir}/replay_buffer")  # 存 buffer 以利日後續訓免重跑
     print("Training complete.")
 
 
@@ -220,4 +221,5 @@ def finetune(wrap_kwargs: dict, output_dir: str, init_model_path: str, *,
         reset_num_timesteps=True,  # 微調的步數從 0 起算，eval interval 才對齊
     )
     model.save(f"{output_dir}/final_model")
+    model.save_replay_buffer(f"{output_dir}/replay_buffer")  # 存 buffer 以利日後續訓免重跑
     print("Fine-tune complete.")
