@@ -7,6 +7,11 @@
 
 ---
 
+## [2026-06-23]
+
+### 新增
+- `output/02train_td3_reward_formula.html`：整理 `02train_td3.py` reward 修正的兩階段目標（邊界懲罰+動作正則化、修正站著不動 attractor）與完整計算公式匯出報告
+
 ## [2026-06-22] — 同步遠端並統一 gait_wrapper 命名
 
 ### 變更

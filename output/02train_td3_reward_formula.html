@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>02train_td3.py — Reward 修正目標與計算公式</title>
+<style>
+  body { font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif; max-width: 920px; margin: 40px auto; padding: 0 20px; line-height: 1.7; color: #222; }
+  h1 { font-size: 1.6em; border-bottom: 3px solid #2c5fa8; padding-bottom: 8px; }
+  h2 { font-size: 1.25em; color: #2c5fa8; margin-top: 2.2em; border-left: 5px solid #2c5fa8; padding-left: 10px; }
+  h3 { font-size: 1.05em; color: #444; margin-top: 1.5em; }
+  table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.92em; }
+  th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #2c5fa8; color: white; }
+  tr:nth-child(even) { background: #f7f9fc; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
+  pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.88em; line-height: 1.5; }
+  .formula-box { background: #eef4fb; border: 1px solid #b9d2ec; border-radius: 8px; padding: 18px 22px; margin: 1em 0; font-size: 1.05em; }
+  .source { font-size: 0.85em; color: #777; }
+  .tag { display: inline-block; background: #2c5fa8; color: white; font-size: 0.75em; padding: 2px 8px; border-radius: 10px; margin-right: 6px; }
+  .note { background: #fff8e1; border-left: 4px solid #f0ad4e; padding: 10px 16px; margin: 1em 0; font-size: 0.92em; }
+  .formula-term { color: #b03060; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>02train_td3.py — Reward 修正目標與完整計算公式</h1>
+<p class="source">資料來源：<code>markdown/ant_reward_modifications.md</code>、<code>markdown/ant_v5_attractor_fix.md</code>、<code>02train_td3.py</code> 實際程式碼</p>
+
+<h2>1. 修正目標（分兩階段）</h2>
+
+<h3><span class="tag">階段一</span>邊界懲罰 + 動作正則化（<code>ant_reward_modifications.md</code>，原為 Ant-v4 設計）</h3>
+<p>最初的目標單純是兩件事：</p>
+<ol>
+  <li><strong>邊界位置懲罰</strong>：防止 Ant 跑出可觀察範圍 —— 從 observation 算出與原點距離，超過閾值後線性懲罰，並用 <code>truncated=True</code>（而非 <code>terminated=True</code>）截斷，避免影響 Q 值 bootstrap。</li>
+  <li><strong>動作正則化</strong>：讓跑姿更穩健、不像慣性蹬地 —— 加入動作幅度懲罰、相鄰動作差異懲罰（抖動）、接觸力懲罰（重落地）。</li>
+</ol>
+
+<h3><span class="tag">階段二</span>修正「站著不動」零風險 attractor（<code>ant_v5_attractor_fix.md</code>，port 到 Ant-v5 後新增）</h3>
+<p>升級到 Ant-v5 後發現：預設 <code>healthy_reward=1.0</code> 讓「站著不動」變成零風險的 attractor basin —— 不管怎麼調 <code>forward_reward_weight</code> 或加 stillness penalty，agent 都會被吸進「站著」這個局部解（5 次實驗驗證）。解法：</p>
+<ul>
+  <li>大幅降低 <code>healthy_reward</code>（拿掉「活著就有分」的誘因）</li>
+  <li>提高 <code>contact_cost_weight</code>（直接懲罰重踩蹬地，改善跑姿）</li>
+  <li>還原 <code>forward_reward_weight=1.0</code>（不再用壓低速度誘因的方式抑制衝刺）</li>
+</ul>
+
+<div class="note">
+最終 <code>02train_td3.py</code> 是兩階段目標的合併實作：用環境參數解決「站著不動」問題，再疊加訓練迴圈裡的邊界懲罰與動作正則化解決「跑出邊界」與「跑姿粗暴」問題。
+</div>
+
+<h2>2. 參數總表（實際採用值，<code>02train_td3.py</code> 第 27–34 行）</h2>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th><th>作用</th></tr>
+<tr><td><code>FORWARD_REWARD_WEIGHT</code></td><td>1.0</td><td>還原 Ant-v5 預設值</td><td>速度獎勵權重，不再壓低衝刺誘因</td></tr>
+<tr><td><code>HEALTHY_REWARD</code></td><td>0.1</td><td>從預設 1.0 大幅降低</td><td>留一點安全網；0.0 時 agent 會學成「衝一下就摔倒重來」</td></tr>
+<tr><td><code>CONTACT_COST_WEIGHT</code></td><td>5e-3</td><td>從預設 5e-4 提高 10 倍</td><td>直接懲罰重踩蹬地，改善跑姿</td></tr>
+<tr><td><code>ctrl_cost_weight</code>（env 預設，未覆寫）</td><td>0.5</td><td>Ant-v5 預設值</td><td>動作幅度懲罰（環境內建）</td></tr>
+<tr><td><code>SOFT_RADIUS</code></td><td>6.0</td><td>新增（02 自訂）</td><td>超過此距離開始給漸增邊界懲罰（事前梯度）</td></tr>
+<tr><td><code>MAX_RADIUS</code></td><td>8.0</td><td>新增（02 自訂）</td><td>離原點距離超過此值，強制 <code>truncated=True</code></td></tr>
+<tr><td><code>BOUNDARY_PENALTY</code></td><td>5.0</td><td>新增（02 自訂）</td><td>邊界懲罰係數（相對 SOFT_RADIUS 漸增）</td></tr>
+<tr><td><code>ACTION_PENALTY_WEIGHT</code></td><td>0.5</td><td>新增（02 自訂）</td><td>動作幅度懲罰係數（避免暴力蹬地）</td></tr>
+<tr><td><code>ACTION_DIFF_PENALTY_WEIGHT</code></td><td>0.1</td><td>新增（02 自訂）</td><td>相鄰動作差異懲罰係數（避免抖動）</td></tr>
+</table>
+
+<h2>3. 完整 Reward 計算公式</h2>
+
+<h3>3.1 環境層（傳入 <code>gym.make()</code> 的客製化 Ant-v5 base reward）</h3>
+<div class="formula-box">
+R<sub>base</sub> = <span class="formula-term">1.0 · v<sub>x</sub></span> &nbsp;+&nbsp; <span class="formula-term">0.1 · 𝟙<sub>healthy</sub></span> &nbsp;−&nbsp; <span class="formula-term">0.5 · Σ a<sub>i</sub>²</span> &nbsp;−&nbsp; <span class="formula-term">5×10⁻³ · Σ clip(f<sub>j</sub>, −1, 1)²</span>
+</div>
+<p>對應 <code>forward_reward + healthy_reward − ctrl_cost − contact_cost</code>（Gymnasium Ant-v5 原生公式，僅替換 <code>healthy_reward</code> 與 <code>contact_cost_weight</code>）。</p>
+
+<h3>3.2 訓練迴圈層（02 額外疊加的 shaping，<code>02train_td3.py</code> 第 94–105 行）</h3>
+<div class="formula-box">
+R<sub>shaping</sub> = − <span class="formula-term">5.0 · max(0, dist − 6.0)</span> &nbsp;−&nbsp; <span class="formula-term">0.5 · Σ a<sub>i</sub>²</span> &nbsp;−&nbsp; <span class="formula-term">0.1 · Σ (a<sub>i</sub> − a<sub>i,prev</sub>)²</span>
+</div>
+<p>其中 <code>dist = info["distance_from_origin"]</code>；若 <code>dist &gt; 8.0</code>（<code>MAX_RADIUS</code>）則額外設定 <code>truncated = True</code> 並在存入 replay buffer 時視為 terminal。</p>
+
+<h3>3.3 最終合併公式</h3>
+<div class="formula-box" style="font-size:1.1em;">
+R = R<sub>base</sub> + R<sub>shaping</sub><br><br>
+R = 1.0·v<sub>x</sub> + 0.1·𝟙<sub>healthy</sub>
+&nbsp;−&nbsp; <strong>1.0</strong>·Σa<sub>i</sub>²
+&nbsp;−&nbsp; 5×10⁻³·Σclip(f<sub>j</sub>,−1,1)²
+&nbsp;−&nbsp; 5.0·max(0, dist−6.0)
+&nbsp;−&nbsp; 0.1·Σ(a<sub>i</sub>−a<sub>i,prev</sub>)²
+</div>
+
+<div class="note">
+<strong>注意：</strong>動作幅度懲罰被疊加了兩次 —— 環境內建的 <code>ctrl_cost_weight=0.5</code>（未覆寫，沿用預設）與訓練迴圈裡的 <code>ACTION_PENALTY_WEIGHT=0.5</code>，兩者係數相加後等效權重為 <strong>1.0</strong>（即上式中粗體的 <code>Σaᵢ²</code> 項）。程式註解裡特別說明「<code>contact_cost</code> 已內建於 Ant-v5 reward，不重複懲罰」，但動作幅度這項實際上確實被疊加計算了兩次。
+</div>
+
+<h2>4. 各子項細節（Python 對照）</h2>
+<pre>
+# 速度（無上限）
+x_velocity = (x_position_after - x_position_before) / dt
+
+# 健康存活判定
+is_healthy = isfinite(state).all() and 0.2 &lt;= z &lt;= 1.0
+
+# 邊界距離
+dist = sqrt(x**2 + y**2)   # info["distance_from_origin"]
+
+# 動作幅度懲罰（env 內建 ctrl_cost + 訓練迴圈 ACTION_PENALTY，合計權重 1.0）
+penalty_action_magnitude = 1.0 * sum(action ** 2)
+
+# 相鄰動作差異懲罰（抖動）
+penalty_action_diff = 0.1 * sum((action - prev_action) ** 2)
+
+# 接觸力懲罰（重落地）
+contact_cost = 5e-3 * sum(clip(cfrc_ext, -1, 1) ** 2)
+
+# 邊界懲罰（事前梯度 + 強制截斷）
+boundary_penalty = 5.0 * max(0, dist - 6.0)   if dist &gt; 6.0 else 0
+if dist &gt; 8.0:
+    truncated = True
+</pre>
+
+<h2>5. 行為意涵總結</h2>
+<table>
+<tr><th>修正項</th><th>解決什麼問題</th><th>權重變化</th></tr>
+<tr><td>降低 <code>healthy_reward</code></td><td>消除「站著不動」零風險 attractor</td><td>1.0 → 0.1</td></tr>
+<tr><td>提高 <code>contact_cost_weight</code></td><td>抑制暴力蹬地、改善落地姿態</td><td>5e-4 → 5e-3（×10）</td></tr>
+<tr><td>還原 <code>forward_reward_weight</code></td><td>不再壓低衝刺誘因，鼓勵真正移動</td><td>0.6/0.8 → 1.0</td></tr>
+<tr><td>邊界懲罰（soft + hard radius）</td><td>防止 Ant 跑出可觀察/可控範圍</td><td>新增，6.0 / 8.0 兩段式</td></tr>
+<tr><td>動作幅度 + 差異懲罰</td><td>讓跑姿更穩健、減少抖動與粗暴蹬地</td><td>新增，合計 1.0 + 0.1</td></tr>
+</table>
+
+</body>
+</html>
